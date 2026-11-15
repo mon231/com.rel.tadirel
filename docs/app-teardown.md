@@ -90,11 +90,27 @@ local/cloud protocol is a different, equally-documented ecosystem — see
 
 ### 3. The app's own backend
 
+!!! note "This app is a white-label platform, not Tadiran-only"
+    The bundle contains a complete onboarding flow for **Ferroli**, a
+    different HVAC brand (`FerroliConnectFirstScreen`,
+    `FerroliConnectSecondScreen`, `ferroliConnectScreen:step1_*`/`step2_*`
+    translation keys). Tadiran's app is one brand's skin on a backend/app
+    platform shared across vendors, not a Tadiran-specific build.
+
 - `https://api.tadiran-iot.co.il` — the app's own account/device-layer
-  backend. No further literal path fragments were found anywhere in the
-  binary (login/command endpoints are presumably built at runtime from
-  non-literal string concatenation, or live only in obfuscated/minified
-  logic not covered by this pass).
+  backend. A second, deeper pass over the Hermes string table (see
+  [Cloud API](cloud-api.md) for the full breakdown) recovered real
+  REST path prefixes (`/tadiran-mobile-app/api/v1`,
+  `/tadiran-mobile-app/api/v2`, `/mobile-app/api/v1`,
+  `/eu/management/api/v1`) and dozens of resource paths
+  (`/devices/`, `/user/`, `/shared-users/`, `/models/ai/recognize/`,
+  etc.), though the host and path prefixes were never observed
+  concatenated as a single literal, so the exact pairing is inferred, not
+  directly confirmed.
+- **AWS Cognito** identifiers, recovered from the native (dex) string
+  pool rather than the JS bundle: User Pool ID `eu-west-1_WG1VW4YTe`,
+  Identity Pool ID `eu-west-1:6f339b1c-924e-4e71-a751-d32bfe454e74`. Both
+  `eu-west-1`, matching the AppSync endpoint's region.
 - **AWS AppSync GraphQL**:
   `https://hz5g3vbxy5h2jhpjclyvzfhiju.appsync-api.eu-west-1.amazonaws.com/graphql`,
   matched by a validation regex also embedded in the JS bundle:
