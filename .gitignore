@@ -14,13 +14,28 @@ site/
 
 # Android / Gradle
 .gradle/
+.kotlin/
 local.properties
 *.iml
 .idea/
+misc.xml
+deploymentTargetDropDown.xml
+render.experimental.xml
 app/build/
 build/
 *.apk
 *.aab
+output-metadata.json
+captures/
+.externalNativeBuild/
+.cxx/
+*.jks
+*.keystore
+google-services.json
+*.hprof
+
+# Log/OS files
+*.log
 
 # Tooling scratch
 .playwright-mcp/
