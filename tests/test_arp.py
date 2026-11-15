@@ -51,5 +51,9 @@ def test_get_arp_table_never_raises_on_failure(monkeypatch):
     def boom(*a, **kw):
         raise FileNotFoundError("no arp binary")
 
+    # On Linux, get_arp_table() reads /proc/net/arp directly (no subprocess
+    # call) before ever falling back to a subprocess -- patch both so the
+    # failure path is forced regardless of which branch this platform takes.
     monkeypatch.setattr(arp.subprocess, "run", boom)
+    monkeypatch.setattr("builtins.open", boom)
     assert arp.get_arp_table() == {}

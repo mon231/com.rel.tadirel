@@ -73,7 +73,10 @@ jobs:
 
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          # Must match app/build.gradle's `python { version }` -- Chaquopy
+          # needs a matching host (buildPython) interpreter to resolve/
+          # install the on-device Python packages.
+          python-version: '3.13'
 
       - name: Set version from tag
         shell: bash
