@@ -1,0 +1,12 @@
+buildscript {
+    repositories {
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        classpath "com.android.tools.build:gradle:8.5.2"
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.9.24"
+        // 17.0.0+ required for 16 KB memory page device support.
+        classpath "com.chaquo.python:gradle:17.2.0"
+    }
+}

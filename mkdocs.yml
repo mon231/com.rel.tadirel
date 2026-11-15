@@ -1,0 +1,32 @@
+site_name: Tadirel — research notes
+site_description: Reverse-engineering notes and protocol reference behind the Tadirel LAN AC controller.
+docs_dir: docs
+
+theme:
+  name: material
+  palette:
+    - scheme: slate
+      primary: teal
+      accent: teal
+  features:
+    - navigation.sections
+    - navigation.expand
+    - content.code.copy
+    - content.code.annotate
+    - toc.integrate
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight
+  - tables
+  - footnotes
+
+nav:
+  - Overview: index.md
+  - App teardown: app-teardown.md
+  - LAN protocol: lan-protocol.md
+  - Cloud API: cloud-api.md
+  - Architecture: architecture.md
+  - Library notes: library-notes.md

@@ -1,0 +1,361 @@
+from __future__ import annotations
+"""Match firmware quirks by firmware code and optional HID-version bounds."""
+
+import re
+from dataclasses import dataclass, replace
+from typing import Optional, Tuple
+
+
+@dataclass(frozen=True)
+class DeviceProfile:
+    """Firmware traits with an optional inclusive numeric module-version bound."""
+
+    firmware_code: str
+    temperature_offset: Optional[int] = None
+    relearn_temperature_offset: bool = False
+    buzzer_properties: Tuple[str, ...] = ()
+    cooling_mode_value: Optional[int] = None
+    capabilities: Tuple[Tuple[str, str, Optional[bool]], ...] = ()
+    gateway_dialect: Optional[str] = None
+    max_version: Optional[str] = None
+
+
+KNOWN_PROFILES: Tuple[DeviceProfile, ...] = (
+    DeviceProfile("362001000748", 40),
+    DeviceProfile("362001000762", 40),
+    DeviceProfile(
+        "362001000835", 0,
+        capabilities=(
+            ("air_conditioner", "steady_heat", False),
+            ("dehumidifier", "current_humidity", False),
+        ),
+    ),
+    DeviceProfile("362001000968", 0),
+    DeviceProfile("362001003795", 40),
+    DeviceProfile(
+        "362001060200", 0,
+        capabilities=(
+            ("air_conditioner", "steady_heat", False),
+            ("dehumidifier", "current_humidity", False),
+        ),
+    ),
+    DeviceProfile(
+        "362001060297", 0,
+        capabilities=(
+            ("air_conditioner", "steady_heat", False),
+            ("dehumidifier", "current_humidity", False),
+        ),
+    ),
+    DeviceProfile(
+        "362001060498", 0,
+        capabilities=(
+            ("air_conditioner", "steady_heat", False),
+            ("dehumidifier", "current_humidity", False),
+        ),
+    ),
+    DeviceProfile(
+        "362001060499", 0, buzzer_properties=("Buzzer_ON_OFF",),
+        capabilities=(("dehumidifier", "current_humidity", False),),
+    ),
+    DeviceProfile("362001060990", 40),
+    DeviceProfile("362001060991", 40),
+    DeviceProfile("362001061023", 40),
+    DeviceProfile("362001061060", 40),
+    DeviceProfile("362001061111", 40),
+    DeviceProfile("362001061234", 40),
+    DeviceProfile("362001061359", 40),
+    DeviceProfile("362001061380", 0),
+    DeviceProfile("362001061381", 40, relearn_temperature_offset=True),
+    DeviceProfile("362001061383", 40, relearn_temperature_offset=True, buzzer_properties=("Buzzer_ON_OFF",)),
+    DeviceProfile("362001061462", 40),
+    DeviceProfile("362001061665", 40, buzzer_properties=("Buzzer_ON_OFF",)),
+    DeviceProfile("362001062025", 40),
+    DeviceProfile("362001062107", 40),
+    DeviceProfile("362001062214", 40),
+    DeviceProfile("362001062293", 40),
+    DeviceProfile("362001062295", 40, buzzer_properties=("Buzzer_ON_OFF",)),
+    DeviceProfile("362001062557", 40, relearn_temperature_offset=True, buzzer_properties=("Buzzer_ON_OFF",)),
+    DeviceProfile("362001062637", 40),
+    DeviceProfile("362001062842", 40, buzzer_properties=("Buzzer_ON_OFF",)),
+    DeviceProfile("362001063525", 40),
+    DeviceProfile("362001063794", 40),
+    DeviceProfile("362001063903", 40, buzzer_properties=("Buzzer_ON_OFF",)),
+    DeviceProfile("362001063967", 40, buzzer_properties=("Buzzer_ON_OFF",)),
+    DeviceProfile("362001064270", 40, relearn_temperature_offset=True, buzzer_properties=("Buzzer_ON_OFF",)),
+    DeviceProfile("362001064304", 40),
+    DeviceProfile("362001064973", 40, relearn_temperature_offset=True, buzzer_properties=("Buzzer_ON_OFF",)),
+    DeviceProfile("362001065016", 40, buzzer_properties=("Buzzer_ON_OFF",)),
+    DeviceProfile("362001065029", 40, buzzer_properties=("Buzzer_ON_OFF",)),
+    DeviceProfile("362001065130", 40, buzzer_properties=("Buzzer_ON_OFF",)),
+    DeviceProfile("362001065279", 40, buzzer_properties=("Buzzer_ON_OFF",)),
+    DeviceProfile(
+        "362001065280", 40, buzzer_properties=("Buzzer_ON_OFF",),
+        max_version="1.22",
+    ),
+    DeviceProfile("362001065280", 40, buzzer_properties=("BuzzerCtrl",)),
+    DeviceProfile("362001065517", 40),
+    DeviceProfile("362001065602", 0),
+    DeviceProfile("362001065701", 40),
+    DeviceProfile("362001065734", 40),
+    DeviceProfile("362001065735", 40),
+    DeviceProfile("362001065736", 40),
+    DeviceProfile("362001066140", 40),
+    DeviceProfile("362001066300", 40),
+    DeviceProfile("362001066308", 40, buzzer_properties=("Buzzer_ON_OFF",)),
+    DeviceProfile("362001066326", gateway_dialect="wb"),
+    DeviceProfile("362001066380", gateway_dialect="wb"),
+    DeviceProfile("362001066511", 40),
+    DeviceProfile(
+        "362001066763", cooling_mode_value=5,
+        capabilities=(
+            ("air_to_water", "inlet_water_temperature_c", True),
+            ("air_to_water", "outlet_water_temperature_c", True),
+            ("air_to_water", "room_temperature_c", True),
+            ("air_to_water", "tank_temperature_c", True),
+        ),
+    ),
+    DeviceProfile("362001066962", 40),
+    DeviceProfile("362001067419", 40, buzzer_properties=("Buzzer_ON_OFF",)),
+    DeviceProfile("362001067422", 40, buzzer_properties=("Buzzer_ON_OFF",)),
+    DeviceProfile("362001067427", 40),
+    DeviceProfile("362001067540", 40),
+    DeviceProfile("362001067541", 40),
+    DeviceProfile("362001067928", 40),
+    DeviceProfile("362001068254", 40),
+    DeviceProfile("362001068295", 40),
+    DeviceProfile("362001068411", 40),
+    DeviceProfile("362001068458", 40, buzzer_properties=("Buzzer_ON_OFF",)),
+    DeviceProfile("362001071519", 40),
+    DeviceProfile(
+        "362001063384",
+        capabilities=(
+            ("air_conditioner", "current_temperature", False),
+            ("air_conditioner", "anion", False),
+            ("air_conditioner", "light", False),
+            ("air_conditioner", "steady_heat", False),
+        ),
+    ),
+    DeviceProfile(
+        "362001067592",
+        capabilities=(
+            ("air_conditioner", "current_temperature", False),
+            ("air_conditioner", "anion", False),
+            ("air_conditioner", "light", False),
+            ("air_conditioner", "steady_heat", False),
+        ),
+    ),
+    DeviceProfile(
+        "362001062617",
+        capabilities=(("air_conditioner", "current_temperature", False),),
+    ),
+    DeviceProfile(
+        "362001061433",
+        capabilities=(("air_conditioner", "current_temperature", False),),
+        gateway_dialect="w06",
+    ),
+    DeviceProfile(
+        "362001067012",
+        capabilities=(("air_conditioner", "current_temperature", False),),
+        gateway_dialect="w06",
+    ),
+    DeviceProfile(
+        "362001065634", buzzer_properties=("Buzzer_ON_OFF",),
+        capabilities=(("air_conditioner", "current_temperature", False),),
+        gateway_dialect="commercial",
+    ),
+    DeviceProfile(
+        "362001069999",
+        capabilities=(
+            ("air_to_water", "power", False),
+            ("air_to_water", "mode", False),
+            ("air_to_water", "temperature_units", False),
+            ("air_to_water", "inlet_water_temperature_c", False),
+            ("air_to_water", "outlet_water_temperature_c", False),
+            ("air_to_water", "room_temperature_c", False),
+            ("air_to_water", "tank_temperature_c", False),
+            ("air_to_water", "heating_room_target_temperature_c", False),
+            ("air_to_water", "cooling_room_target_temperature_c", False),
+            ("air_to_water", "heating_water_target_temperature_c", False),
+            ("air_to_water", "cooling_water_target_temperature_c", False),
+            ("air_to_water", "tank_target_temperature_c", False),
+        ),
+    ),
+    DeviceProfile("362001060368"),
+    DeviceProfile(
+        "362001060429",
+        capabilities=(("air_conditioner", "current_temperature", False),),
+    ),
+    DeviceProfile("362001060965"),
+    DeviceProfile("362001061114"),
+    DeviceProfile("362001061147"),
+    DeviceProfile("362001061272"),
+    DeviceProfile(
+        "362001061608",
+        capabilities=(("air_conditioner", "current_temperature", False),),
+    ),
+    DeviceProfile("362001067139"),
+    DeviceProfile(
+        "362001067524",
+        capabilities=(("air_conditioner", "current_temperature", False),),
+        gateway_dialect="w06",
+    ),
+    DeviceProfile("362001060956"),
+    DeviceProfile("362001061144"),
+    DeviceProfile("362001061167"),
+    DeviceProfile("362001061824"),
+    DeviceProfile("362001062097"),
+    DeviceProfile("362001060629"),
+    DeviceProfile("362001060709"),
+    DeviceProfile("362001061068"),
+    DeviceProfile("362001061133"),
+    DeviceProfile("362001061148"),
+    DeviceProfile(
+        "362001061437",
+        capabilities=(("air_conditioner", "current_temperature", False),),
+        gateway_dialect="w06",
+    ),
+    DeviceProfile(
+        "362001061649",
+        capabilities=(
+            ("air_conditioner", "mode", False),
+            ("air_conditioner", "fan_speed", False),
+            ("air_conditioner", "fresh_air", False),
+            ("air_conditioner", "xfan", False),
+            ("air_conditioner", "anion", False),
+            ("air_conditioner", "horizontal_swing", False),
+            ("air_conditioner", "quiet", False),
+            ("air_conditioner", "steady_heat", False),
+            ("air_conditioner", "power_save", False),
+            ("air_conditioner", "target_temperature", False),
+            ("air_conditioner", "temperature_units", False),
+            ("air_conditioner", "current_temperature", False),
+            ("air_conditioner", "sleep", False),
+            ("air_conditioner", "light", False),
+            ("air_conditioner", "turbo", False),
+            ("air_conditioner", "vertical_swing", False),
+            ("dehumidifier", "target_humidity", False),
+            ("dehumidifier", "dehumidifier_mode", False),
+            ("dehumidifier", "current_humidity", False),
+            ("dehumidifier", "clean_filter", False),
+            ("dehumidifier", "water_full", False),
+            ("dehumidifier", "current_temperature", False),
+            ("dehumidifier", "temperature_units", False),
+            ("dehumidifier", "light", False),
+            ("dehumidifier", "vertical_swing", False),
+            ("dehumidifier", "fan_speed", False),
+            ("dehumidifier", "anion", False),
+            ("dehumidifier", "quiet", False),
+        ),
+    ),
+    DeviceProfile("362001062071"),
+    DeviceProfile("362001061331"),
+    DeviceProfile("362001061917"),
+    DeviceProfile("362001061996"),
+    DeviceProfile("362001062573"),
+    DeviceProfile("362001063066"),
+    DeviceProfile("362001063147"),
+    DeviceProfile("362001063300"),
+    DeviceProfile("362001063856"),
+    DeviceProfile("362001064475"),
+    DeviceProfile("362001065867"),
+    DeviceProfile("362001066012"),
+    DeviceProfile("362001066224"),
+    DeviceProfile("362001066240"),
+    DeviceProfile("362001066428"),
+    DeviceProfile("362001066481"),
+    DeviceProfile("362001067919"),
+    DeviceProfile("362001069264"),
+    DeviceProfile("362001071823"),
+    DeviceProfile("362001064231"),
+    DeviceProfile("362001065909"),
+    DeviceProfile("362001067405"),
+    DeviceProfile("362001068423"),
+    DeviceProfile("362001069454"),
+    DeviceProfile("362001069922"),
+    DeviceProfile("362001071953"),
+    DeviceProfile("362001061329"),
+    DeviceProfile("362001061394"),
+    DeviceProfile("362001061704"),
+    DeviceProfile("362001061894"),
+    DeviceProfile("362001061895"),
+    DeviceProfile("362001062992"),
+    DeviceProfile("362001066515"),
+    DeviceProfile("362001068561"),
+    DeviceProfile("362001068811"),
+    DeviceProfile("362001061446"),
+    DeviceProfile("362001062033"),
+    DeviceProfile("362001064696"),
+    DeviceProfile("362001068839"),
+    DeviceProfile("362001065567"),
+    DeviceProfile("362001067522"),
+    DeviceProfile("362001068796"),
+    DeviceProfile("362001063228"),
+    DeviceProfile("362001063534"),
+    DeviceProfile("362001065437"),
+    DeviceProfile("362001065586"),
+    DeviceProfile("362001067274"),
+    DeviceProfile("362001061890"),
+    DeviceProfile("362001061898"),
+    DeviceProfile("362001062978"),
+    DeviceProfile("362001063222"),
+    DeviceProfile("362001062870"),
+    DeviceProfile("362001068872"),
+    DeviceProfile("362001062030"),
+    DeviceProfile("362001063012"),
+    DeviceProfile("362001061395"),
+    DeviceProfile("362001061549"),
+    DeviceProfile("362001061737"),
+    DeviceProfile("362001061820"),
+    DeviceProfile("362001061861"),
+    DeviceProfile("362001062126"),
+    DeviceProfile("362001062353"),
+    DeviceProfile("362001062715"),
+    DeviceProfile("362001063062"),
+    DeviceProfile("362001063082"),
+    DeviceProfile("362001065811"),
+    DeviceProfile("362001067088"),
+    DeviceProfile("36300000257"),
+)
+
+
+def _version_key(version: str) -> Tuple[int, ...]:
+    parts = [int(part) for part in version.split(".")]
+    while parts and parts[-1] == 0:
+        parts.pop()
+    return tuple(parts)
+
+
+def match_device_profile(hid: Optional[str]) -> Optional[DeviceProfile]:
+    """Prefer the tightest inclusive bound, then the firmware-code default.
+
+    Missing or malformed HID versions suppress only automatic buzzer fields
+    for codes with bounded profiles; the default's other traits remain intact.
+    """
+    if not isinstance(hid, str):
+        return None
+    code, _, suffix = hid.partition("+")
+    default = selected = selected_limit = version = None
+    has_bounds = False
+    for profile in KNOWN_PROFILES:
+        if profile.firmware_code != code:
+            continue
+        if profile.max_version is None:
+            default = profile
+            continue
+        if not has_bounds:
+            has_bounds = True
+            match = re.search(r"V([0-9]+(?:\.[0-9]+)*)\.bin\Z", suffix)
+            try:
+                version = _version_key(match.group(1)) if match else None
+            except ValueError:
+                version = None
+        if version is None:
+            continue
+        limit = _version_key(profile.max_version)
+        if version <= limit and (selected_limit is None or limit < selected_limit):
+            selected, selected_limit = profile, limit
+    if selected is not None:
+        return selected
+    if has_bounds and version is None and default is not None:
+        return replace(default, buzzer_properties=())
+    return default

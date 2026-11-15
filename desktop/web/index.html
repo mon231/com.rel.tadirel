@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="utf-8" />
+  <title>Tadirel</title>
+  <link rel="icon" type="image/svg+xml" href="icon.svg" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <h1><img class="logo" src="icon.svg" alt="" width="22" height="22" /> Tadirel</h1>
+  </header>
+
+  <main>
+    <section class="panel" id="known-panel">
+      <div class="panel-head">
+        <h2>Saved air conditioners</h2>
+        <button class="icon-btn" id="refresh-known-btn" title="Refresh">&#10227;</button>
+      </div>
+      <ul class="device-list" id="known-list">
+        <li class="empty-hint">No saved air conditioners yet. Scan your network below and name one to save it.</li>
+      </ul>
+    </section>
+
+    <section class="panel" id="scan-panel">
+      <div class="panel-head">
+        <button class="primary-btn" id="scan-btn">Scan subnet</button>
+      </div>
+      <div class="scan-progress" id="scan-progress" hidden>
+        <div class="scan-progress-bar"><div class="scan-progress-fill" id="scan-progress-fill"></div></div>
+        <span id="scan-progress-label">Scanning… 0s / 12s</span>
+      </div>
+      <ul class="device-list" id="scan-list"></ul>
+    </section>
+  </main>
+
+  <div class="modal-backdrop" id="detail-backdrop" hidden>
+    <div class="modal" id="detail-modal">
+      <div class="modal-head">
+        <h2 id="detail-name">Device</h2>
+        <button class="icon-btn" id="detail-rename-btn" title="Rename">&#9998;</button>
+        <button class="icon-btn" id="detail-close-btn" title="Close">&#10005;</button>
+      </div>
+      <div class="modal-sub" id="detail-sub"></div>
+      <div class="controls" id="detail-controls"></div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" hidden></div>
+
+  <div class="loading-overlay" id="loading-overlay" hidden>
+    <div class="spinner"></div>
+  </div>
+
+  <script type="text/javascript" src="/eel.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

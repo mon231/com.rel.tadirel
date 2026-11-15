@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">Tadirel</string>
+    <string name="pair_action">Pair</string>
+    <string name="scan_subnet_action">Scan subnet</string>
+</resources>

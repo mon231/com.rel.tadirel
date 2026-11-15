@@ -1,0 +1,87 @@
+apply plugin: "com.android.application"
+apply plugin: "kotlin-android"
+apply plugin: "com.chaquo.python"
+
+android {
+    namespace "com.rel.tadirel"
+    compileSdk 35
+
+    defaultConfig {
+        applicationId "com.rel.tadirel"
+        minSdk 26
+        targetSdk 35
+        // Overridable for release builds: -PversionCode=N -PversionName=X.Y.Z
+        versionCode project.hasProperty("versionCode") ? project.property("versionCode").toInteger() : 1
+        versionName project.hasProperty("versionName") ? project.property("versionName") : "0.1.0"
+
+        ndk {
+            abiFilters "arm64-v8a", "x86_64"
+        }
+        python {
+            // Chaquopy 17.0.0+ runtime supports 16 KB memory pages, but its
+            // docs say "many existing Android wheels will still fail to
+            // load on 16 KB devices -- for best compatibility use Python
+            // 3.13 or later." We don't pip-install any wheels with native
+            // extensions anyway (greeclimate is vendored, crypto uses
+            // javax.crypto -- see cipher.py), so this is just the safest
+            // available interpreter version.
+            version "3.13"
+            pip {
+                // greeclimate itself is vendored under src/main/python/greeclimate
+                // (see note below). Its only remaining real dependency is
+                // ifaddr (pure Python, used for broadcast-address discovery);
+                // pycryptodome is NOT installed here -- see cipher.py in the
+                // vendored package for why (Chaquopy's cross-compiled
+                // pycryptodome wheels are missing native cipher .so files on
+                // arm64-v8a; the Android build uses javax.crypto instead).
+                install "ifaddr~=0.2.0"
+            }
+        }
+    }
+
+    sourceSets {
+        main {
+            // Three source dirs: this module's own Android-glue Python code
+            // (which also vendors greeclimate, see below), and the ONE
+            // shared backend package (no copy, same files the desktop app
+            // imports from ../backend).
+            //
+            // greeclimate is vendored as plain source under
+            // src/main/python/greeclimate rather than pip-installed:
+            // Chaquopy's package index (chaquo.com/pypi-13.1) only mirrors
+            // greeclimate up to 2.1.4, which predates the 4.x rewrite this
+            // project's backend/ is built against (different module layout,
+            // no AirConditionerDevice/Props/device_factory). Vendoring the
+            // exact 4.3.0 source we developed and tested backend/ against
+            // avoids a silent API mismatch. greeclimate is GPLv3-licensed;
+            // bundling it here is fine for this personal/sideloaded build,
+            // but re-check GPL source-availability obligations before ever
+            // distributing a built APK to anyone else.
+            python.srcDirs = ["src/main/python", "../backend"]
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+    kotlinOptions {
+        jvmTarget = "17"
+    }
+}
+
+dependencies {
+    implementation "androidx.core:core-ktx:1.13.1"
+    implementation "androidx.appcompat:appcompat:1.7.0"
+    implementation "com.google.android.material:material:1.12.0"
+    implementation "androidx.recyclerview:recyclerview:1.3.2"
+    implementation "androidx.constraintlayout:constraintlayout:2.1.4"
+    implementation "androidx.lifecycle:lifecycle-runtime-ktx:2.8.3"
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1"
+}

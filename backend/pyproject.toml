@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "tadiran-ac-backend"
+description = "LAN control for Tadiran/Gree air conditioners (Gree+ UDP protocol)"
+license = "MIT"
+requires-python = ">=3.10"
+dynamic = ["version"]
+dependencies = [
+    "greeclimate>=4.3.0,<5",
+]
+
+[tool.setuptools.dynamic]
+version = { attr = "tadiran_ac_backend._version.__version__" }
+
+[tool.setuptools.packages.find]
+include = ["tadiran_ac_backend*"]

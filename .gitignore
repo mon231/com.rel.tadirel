@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+*.egg-info/
+dist/
+backend/build/
+
+# MkDocs
+site/
+
+# Local device store (per-machine, not shared)
+.tadiran_ac_control/
+
+# Android / Gradle
+.gradle/
+local.properties
+*.iml
+.idea/
+app/build/
+build/
+*.apk
+*.aab
+
+# Tooling scratch
+.playwright-mcp/
+
+# Research artifacts (large binaries, not source)
+*.xapk
+extract/
