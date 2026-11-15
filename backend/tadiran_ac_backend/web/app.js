@@ -21,7 +21,16 @@ function toast(message, isError) {
 
 async function call(fn, ...args) {
   try {
-    return await eel[fn](...args)();
+    if (typeof eel !== "undefined") return await eel[fn](...args)();
+    // no Eel (served by the HTTPS server): same functions over HTTP
+    const res = await fetch("/api/" + fn, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ args }),
+    });
+    const out = await res.json();
+    if (!out.ok) throw new Error(out.error);
+    return out.value;
   } catch (err) {
     toast(String(err && err.errorText ? err.errorText : err), true);
     throw err;

@@ -1,11 +1,12 @@
 """Desktop "PC app": Eel wraps backend.api and opens a native app window
-around desktop/web/index.html. This process IS the app -- no separate
+around backend/tadiran_ac_backend/web/index.html. This process IS the app -- no separate
 server to run, no browser tab to manage.
 """
 
 from __future__ import annotations
 
 import sys
+import threading
 from pathlib import Path
 
 import eel
@@ -14,7 +15,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "backend"))
 
 from tadiran_ac_backend import api  # noqa: E402
 
-WEB_DIR = str(Path(__file__).resolve().parent / "web")
+WEB_DIR = str(Path(api.__file__).resolve().parent / "web")
 
 eel.init(WEB_DIR)
 
@@ -66,6 +67,13 @@ def capabilities():
 
 def main():
     import os
+
+    if "--serve" in sys.argv:
+        # headless: same HTTPS server the Android "server" build runs
+        from tadiran_ac_backend import webserver
+
+        print("serving https on port", webserver.start_server())
+        threading.Event().wait()
 
     if os.environ.get("AC_CONTROL_NO_BROWSER"):
         # test/dev mode: just run the server, let something else connect to it

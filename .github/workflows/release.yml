@@ -47,7 +47,8 @@ jobs:
           pyinstaller desktop/app.py
           --onefile --noconsole --name tadirel
           --paths backend
-          --add-data "desktop/web${{ matrix.sep }}web"
+          --add-data "backend/tadiran_ac_backend/web${{ matrix.sep }}tadiran_ac_backend/web"
+          --add-data "backend/tadiran_ac_backend/certs${{ matrix.sep }}tadiran_ac_backend/certs"
           --collect-data eel
           ${{ matrix.icon }}
 
@@ -94,10 +95,11 @@ jobs:
           # signapp shells out to zipalign and apksigner: use the runner's SDK build-tools
           export PATH="$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1):$PATH"
           mkdir -p ~/.reltools
-          unsigned=$(ls app/build/outputs/apk/release/*.apk)
           # no -k: signapp signs with its built-in keystore
-          signapp -a "$unsigned" -o "tadirel-${GITHUB_REF_NAME}.apk"
+          signapp -a app/build/outputs/apk/standard/release/*.apk -o "tadirel-${GITHUB_REF_NAME}.apk"
+          signapp -a app/build/outputs/apk/server/release/*.apk -o "tadirel-server-${GITHUB_REF_NAME}.apk"
           apksigner verify --verbose "tadirel-${GITHUB_REF_NAME}.apk"
+          apksigner verify --verbose "tadirel-server-${GITHUB_REF_NAME}.apk"
 
       - uses: actions/upload-artifact@v4
         with:

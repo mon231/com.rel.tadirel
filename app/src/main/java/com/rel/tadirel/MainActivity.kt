@@ -33,6 +33,7 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         applyEdgeToEdgeInsets(findViewById(android.R.id.content))
+        FlavorHooks.onMainActivity(this)
 
         knownEmptyHint = findViewById(R.id.knownEmptyHint)
         scanProgressBar = findViewById(R.id.scanProgressBar)

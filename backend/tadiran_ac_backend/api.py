@@ -140,3 +140,27 @@ def send_command(mac: str, changes: dict[str, Any]) -> dict[str, Any]:
 
 def capabilities() -> dict[str, Any]:
     return protocol_props.capabilities_payload()
+
+
+# -------------------------------------------------------------- dispatch
+
+PUBLIC_FUNCTIONS = (
+    "start_scan",
+    "poll_scan",
+    "list_known_devices",
+    "set_device_name",
+    "rename_device",
+    "remove_device",
+    "get_status",
+    "send_command",
+    "capabilities",
+)
+
+
+def dispatch(name: str, args: list[Any] | None = None) -> Any:
+    """Call a public api function by name. Used by every transport that
+    can't bind functions directly (the HTTPS server today; anything
+    JSON-RPC-shaped tomorrow). Only names in PUBLIC_FUNCTIONS are callable."""
+    if name not in PUBLIC_FUNCTIONS:
+        raise ValueError(f"unknown api function: {name}")
+    return globals()[name](*(args or []))

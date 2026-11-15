@@ -80,3 +80,13 @@ def capabilities():
         return _ok(api.capabilities())
     except Exception as exc:
         return _err(exc)
+
+
+def start_server():
+    """Starts the shared HTTPS server (server flavor's service calls this)."""
+    try:
+        from tadiran_ac_backend import webserver
+
+        return _ok(webserver.start_server())
+    except Exception as exc:
+        return _err(exc)

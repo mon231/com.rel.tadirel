@@ -40,7 +40,8 @@ jobs:
           pyinstaller desktop/app.py
           --onefile --noconsole --name tadirel
           --paths backend
-          --add-data "desktop/web${{ matrix.sep }}web"
+          --add-data "backend/tadiran_ac_backend/web${{ matrix.sep }}tadiran_ac_backend/web"
+          --add-data "backend/tadiran_ac_backend/certs${{ matrix.sep }}tadiran_ac_backend/certs"
           --collect-data eel
           ${{ matrix.icon }}
 

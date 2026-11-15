@@ -17,3 +17,6 @@ version = { attr = "tadiran_ac_backend._version.__version__" }
 
 [tool.setuptools.packages.find]
 include = ["tadiran_ac_backend*"]
+
+[tool.setuptools.package-data]
+tadiran_ac_backend = ["web/*", "certs/*"]

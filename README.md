@@ -39,6 +39,19 @@ built via Chaquopy. Runs on real hardware (Samsung Galaxy S24-class
 device tested); see that README for the Chaquopy/16KB-page/vendoring
 fixes it took to get there.
 
+## Tadirel Server (Android, always-on)
+
+`tadirel-server-<tag>.apk` (applicationId `com.rel.tadirel.server`, installs
+next to the regular app) is the same app plus a foreground service that runs
+the shared backend's HTTPS server on **port 18972** and starts again on boot.
+Browse to `https://<phone-ip>:18972/` for the web UI (same UI as the PC
+app). TLS uses a hard-coded self-signed cert (valid to 2126) in
+`backend/tadiran_ac_backend/certs/`, so browsers show a one-time warning.
+There is **no authentication**: anyone on the LAN can control your ACs.
+Open the app once so the service starts and Android grants the
+"always run in background" exemption. The PC app can run the same server
+headless: `python desktop/app.py --serve`.
+
 ## Tests
 
 ```
