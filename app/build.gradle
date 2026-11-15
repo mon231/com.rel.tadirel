@@ -8,7 +8,7 @@ android {
 
     defaultConfig {
         applicationId "com.rel.tadirel"
-        minSdk 26
+        minSdk 29
         targetSdk 35
         // Overridable for release builds: -PversionCode=N -PversionName=X.Y.Z
         versionCode project.hasProperty("versionCode") ? project.property("versionCode").toInteger() : 1
@@ -17,17 +17,15 @@ android {
         flavorDimensions "dist"
 
         ndk {
-            abiFilters "arm64-v8a", "x86_64"
+            abiFilters "arm64-v8a", "armeabi-v7a", "x86_64"
         }
         python {
-            // Chaquopy 17.0.0+ runtime supports 16 KB memory pages, but its
-            // docs say "many existing Android wheels will still fail to
-            // load on 16 KB devices -- for best compatibility use Python
-            // 3.13 or later." We don't pip-install any wheels with native
-            // extensions anyway (greeclimate is vendored, crypto uses
-            // javax.crypto -- see cipher.py), so this is just the safest
-            // available interpreter version.
-            version "3.13"
+            // 3.11: the newest Python Chaquopy still ships for 32-bit
+            // armeabi-v7a (3.12+ is 64-bit only). 16 KB-page devices are
+            // fine: the Chaquopy 17 runtime supports them and we install
+            // no native wheels (greeclimate is vendored, crypto uses
+            // javax.crypto -- see cipher.py).
+            version "3.11"
             pip {
                 // greeclimate itself is vendored under src/main/python/greeclimate
                 // (see note below). Its only remaining real dependency is

@@ -21,7 +21,7 @@ jobs:
           # Must match app/build.gradle's `python { version }` -- Chaquopy
           # needs a matching host (buildPython) interpreter to resolve/
           # install the on-device Python packages.
-          python-version: '3.13'
+          python-version: '3.11'
 
       - name: Build APK
         run: bash ./gradlew build
