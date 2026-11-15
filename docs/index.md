@@ -9,6 +9,8 @@ official Tadiran consumer app and the public Gree AC protocol.
 
 - **[App teardown](app-teardown.md)** — what's inside the official app:
   bundled vendor SDKs, native libraries, permissions, how it's built.
+- **[Asset inventory](asset-inventory.md)** — exhaustive catalog of every
+  native library and asset file, plus third-party SDK identifiers found.
 - **[LAN protocol](lan-protocol.md)** — the wire protocol actually used to
   talk to the AC's WiFi module (UDP port 7000, AES-encrypted JSON). This
   is the protocol Tadirel's own backend uses.

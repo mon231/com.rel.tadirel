@@ -26,6 +26,7 @@ markdown_extensions:
 nav:
   - Overview: index.md
   - App teardown: app-teardown.md
+  - Asset inventory: asset-inventory.md
   - LAN protocol: lan-protocol.md
   - Cloud API: cloud-api.md
   - Architecture: architecture.md
