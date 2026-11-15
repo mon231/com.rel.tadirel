@@ -1,0 +1,789 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Reverse-engineering notes and protocol reference behind the Tadirel LAN AC controller.">
+      
+      
+      
+      
+        <link rel="prev" href="../app-teardown/">
+      
+      
+        <link rel="next" href="../lan-protocol/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.1">
+    
+    
+      
+        <title>Asset inventory - Tadirel — research notes</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.57a0d79d.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.fb2fffe2.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="teal" data-md-color-accent="teal">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#full-asset-inventory" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="Tadirel — research notes" class="md-header__button md-logo" aria-label="Tadirel — research notes" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Tadirel — research notes
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Asset inventory
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="teal" data-md-color-accent="teal"  aria-hidden="true"  type="radio" name="__palette" id="__palette_0">
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+  
+
+<nav class="md-nav md-nav--primary md-nav--integrated" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="Tadirel — research notes" class="md-nav__button md-logo" aria-label="Tadirel — research notes" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Tadirel — research notes
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../app-teardown/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    App teardown
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Asset inventory
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Asset inventory
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#native-libraries-libarm64-v8a" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Native libraries (lib/arm64-v8a/)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#assets-tree-base-apk" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        assets/ tree (base APK)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#third-party-sdk-identifiers-found" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Third-party SDK identifiers found
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-this-pass-closes-out" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What this pass closes out
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../lan-protocol/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    LAN protocol
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cloud-api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cloud API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../library-notes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Library notes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="full-asset-inventory">Full asset inventory</h1>
+<p>Exhaustive pass over every asset bundled in the official app: native
+libraries (all ABIs), the <code>assets/</code> tree, and a final sweep for
+third-party SDK identifiers that didn't fit elsewhere. See
+<a href="../app-teardown/">App teardown</a> for the primary findings and
+<a href="../cloud-api/">Cloud API</a> for the REST/GraphQL surface — this page is the
+"everything else" catalog.</p>
+<h2 id="native-libraries-libarm64-v8a">Native libraries (<code>lib/arm64-v8a/</code>)</h2>
+<table>
+<thead>
+<tr>
+<th>Library</th>
+<th>Size</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>libgree.so</code></td>
+<td>341 KB</td>
+<td>Gree AES/crypto primitives (see <a href="../app-teardown/">App teardown</a>)</td>
+</tr>
+<tr>
+<td><code>libBleLib.so</code></td>
+<td>16 KB</td>
+<td>Gree BLE provisioning transport. No literal service/characteristic UUID strings recoverable via static <code>strings</code> — likely stored as raw binary constants, not string literals.</td>
+</tr>
+<tr>
+<td><code>libCHIPController.so</code></td>
+<td>10.5 MB</td>
+<td>Matter/CHIP controller (Tuya's Matter support) — largest native lib in the app by far</td>
+</tr>
+<tr>
+<td><code>libThingSmartLink.so</code></td>
+<td>283 KB</td>
+<td>Tuya ("ThingSmart") WiFi-provisioning SmartLink/SmartConfig native code</td>
+</tr>
+<tr>
+<td><code>libthing_security.so</code></td>
+<td>195 KB</td>
+<td>Tuya SDK crypto/security native layer</td>
+</tr>
+<tr>
+<td><code>libthing_security_algorithm.so</code></td>
+<td>77 KB</td>
+<td>Tuya SDK crypto algorithm implementations</td>
+</tr>
+<tr>
+<td><code>libthingmmkv.so</code></td>
+<td>512 KB</td>
+<td>Tuya's MMKV (Tencent's fast key-value store) bundled for Tuya SDK local storage</td>
+</tr>
+<tr>
+<td><code>libVisionCamera.so</code></td>
+<td>276 KB</td>
+<td>react-native-vision-camera (used for the photo-based AC model recognition feature, see <a href="../cloud-api/">Cloud API</a>'s <code>/models/ai/recognize/</code>)</td>
+</tr>
+<tr>
+<td><code>libreactnative.so</code></td>
+<td>5.7 MB</td>
+<td>React Native's own native runtime</td>
+</tr>
+<tr>
+<td><code>libhermes.so</code></td>
+<td>2.1 MB</td>
+<td>Hermes JS engine</td>
+</tr>
+<tr>
+<td><code>libhermestooling.so</code></td>
+<td>134 KB</td>
+<td>Hermes debugging/inspector tooling</td>
+</tr>
+<tr>
+<td><code>libjsi.so</code></td>
+<td>382 KB</td>
+<td>React Native's JS-to-native interface</td>
+</tr>
+<tr>
+<td><code>libworklets.so</code></td>
+<td>841 KB</td>
+<td>react-native-reanimated worklets runtime</td>
+</tr>
+<tr>
+<td><code>libreanimated.so</code></td>
+<td>1.4 MB</td>
+<td>react-native-reanimated</td>
+</tr>
+<tr>
+<td><code>libnetwork-android.so</code></td>
+<td>2.3 MB</td>
+<td>Facebook's native networking stack (Fresco/okhttp-adjacent)</td>
+</tr>
+<tr>
+<td><code>libreact_codegen_*.so</code> (4 files)</td>
+<td>~1.8 MB total</td>
+<td>Codegen'd native modules for RNCSlider, rnscreens, rnsvg, safeareacontext</td>
+</tr>
+<tr>
+<td><code>librnscreens.so</code>, <code>libgesturehandler.so</code></td>
+<td>101 KB, 38 KB</td>
+<td>react-native-screens / react-native-gesture-handler</td>
+</tr>
+<tr>
+<td><code>libgifimage.so</code>, <code>libimagepipeline.so</code>, <code>libimage_processing_util_jni.so</code>, <code>libnative-filters.so</code>, <code>libnative-imagetranscoder.so</code></td>
+<td>~1 MB combined</td>
+<td>Fresco image-loading pipeline</td>
+</tr>
+<tr>
+<td><code>libfbjni.so</code></td>
+<td>177 KB</td>
+<td>Facebook's JNI helper library</td>
+</tr>
+<tr>
+<td><code>libdatastore_shared_counter.so</code></td>
+<td>7 KB</td>
+<td>AndroidX DataStore</td>
+</tr>
+<tr>
+<td><code>libc++_shared.so</code></td>
+<td>1.3 MB</td>
+<td>Shared C++ standard library</td>
+</tr>
+</tbody>
+</table>
+<p>A <code>strings</code>-level sweep of <strong>every</strong> <code>.so</code> listed above for URLs/domains
+found <strong>nothing beyond generic toolchain/doc banners</strong>
+(<code>android.googlesource.com</code>, <code>reactnative.dev/docs</code>, <code>perfetto.dev</code>,
+<code>docs.swmansion.com</code>) — no additional cloud endpoints anywhere in native
+code. This closes the question raised in earlier passes: networking
+logic for this app lives entirely in the JS bundle and/or Java/Kotlin
+layer, never in native code.</p>
+<h2 id="assets-tree-base-apk"><code>assets/</code> tree (base APK)</h2>
+<table>
+<thead>
+<tr>
+<th>Path</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>index.android.bundle</code></td>
+<td>The Hermes-compiled JS bundle — see <a href="../app-teardown/">App teardown</a> for how it was parsed</td>
+</tr>
+<tr>
+<td><code>_.as.gree.com.cer</code>, <code>_.gree.com.cer</code></td>
+<td>TLS pinning certs for Gree's cloud domains</td>
+</tr>
+<tr>
+<td><code>cers</code></td>
+<td><strong>Resolved finding</strong>: byte-for-byte identical content to <code>thing_domains_v1/regions</code> (below) — both are the same base64-obfuscated Facebook SDK network-pinning blob, bundled twice under different paths by two different RN modules that each vendor a copy. Not AC-related, not a separate discovery.</td>
+</tr>
+<tr>
+<td><code>thing_domains_v1/regions</code>, <code>thing_domains_v1/pins</code>, <code>thing_domains_v1/h2.ca.der</code></td>
+<td>Despite the "thing" naming (suggesting AWS IoT "Thing"), this is actually Facebook SDK's own TLS-pinning data store, confirmed by the <code>cers</code> duplicate above — a naming coincidence, not an AWS IoT artifact.</td>
+</tr>
+<tr>
+<td><code>t_cdc.tcfg</code></td>
+<td>Tuya SDK's encrypted device-config blob (file magic bytes coincidentally match an OpenPGP key header; it is not one — opaque, proprietary Tuya format, not decodable without Tuya's own key material)</td>
+</tr>
+<tr>
+<td><code>fixed_key.bmp</code>, <code>t_s.bmp</code></td>
+<td>Genuine 100×75 24-bit BMP images per file-format inspection (not steganographically disguised data, as far as a surface check can tell) — likely Tuya SDK placeholder/internal assets</td>
+</tr>
+<tr>
+<td><code>countryList.en.json</code></td>
+<td>Plain country-list data for phone-number/region pickers</td>
+</tr>
+<tr>
+<td><code>fonts/</code></td>
+<td>Roboto + "Almoni" (a Hebrew typeface family) weights — confirms Hebrew-market UI design from the font choice alone</td>
+</tr>
+<tr>
+<td><code>com/appsflyer/internal/*</code></td>
+<td>AppsFlyer SDK's own opaque internal config blobs</td>
+</tr>
+<tr>
+<td><code>dexopt/baseline.prof</code>, <code>baseline.profm</code></td>
+<td>Android Runtime (ART) baseline profiles for startup optimization, unrelated to app logic</td>
+</tr>
+</tbody>
+</table>
+<h2 id="third-party-sdk-identifiers-found">Third-party SDK identifiers found</h2>
+<p>These are client-side identifiers embedded in the shipped app binary —
+normal for mobile analytics/crash-reporting SDKs (they're not secrets in
+the security sense; any app installer trivially exposes them, which is
+why vendors design these SDKs to tolerate public client identifiers).
+Listed here purely for completeness of the asset inventory:</p>
+<ul>
+<li><strong>Datadog</strong> client token: <code>pub5499c62c9617fe3d0ca63247821a9020</code>. Both
+  <code>datadoghq.com</code> and <code>datadoghq.eu</code> site strings are present (standard
+  Datadog SDK default-option strings) — given every other confirmed
+  backend element is <code>eu-west-1</code>, <code>datadoghq.eu</code> is the more likely active
+  site, but this wasn't independently confirmed.</li>
+<li><strong>Mixpanel</strong>, <strong>Firebase</strong>, <strong>AppsFlyer</strong>, <strong>Facebook SDK</strong>, <strong>Emarsys</strong>:
+  all present as bundled libraries (consistent with the dependency list
+  implied by <code>app-teardown.md</code>'s architecture section), but no static
+  API key/token/project-ID string was recovered with confident
+  attribution for any of them — likely injected via native
+  <code>google-services.json</code>/Gradle resource values rather than plain string
+  literals, or genuinely not present in this build.</li>
+<li>No Google Maps/Places API key (<code>AIza...</code> pattern) was found anywhere in
+  the dex or JS string pools.</li>
+</ul>
+<h2 id="what-this-pass-closes-out">What this pass closes out</h2>
+<ul>
+<li><strong>Native code confirmed clean of hidden endpoints</strong> — every <code>.so</code> in
+  the app was swept; nothing beyond public documentation URLs.</li>
+<li><strong>The <code>thing_domains_v1</code> naming red herring is resolved</strong> — it is
+  Facebook SDK pinning data, not an AWS IoT Core artifact, confirmed by
+  finding byte-identical content under the unrelated <code>cers</code> path.</li>
+<li><strong>BLE provisioning UUIDs remain unrecovered</strong> — <code>libBleLib.so</code> almost
+  certainly contains them as raw binary GATT UUID bytes rather than
+  ASCII string literals; extracting them would need a disassembler pass
+  on the library itself, not a strings sweep (out of scope here, since
+  this project doesn't implement new-device BLE pairing — see
+  <a href="../architecture/">Architecture</a>'s "explicitly out of scope" section).</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.sections", "navigation.expand", "content.code.copy", "content.code.annotate", "toc.integrate"], "search": "../assets/javascripts/workers/search.a7633da7.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.a5f9d56c.min.js"></script>
+      
+    
+  </body>
+</html>

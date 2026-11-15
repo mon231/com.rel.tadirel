@@ -1,0 +1,781 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Reverse-engineering notes and protocol reference behind the Tadirel LAN AC controller.">
+      
+      
+      
+      
+        <link rel="prev" href="..">
+      
+      
+        <link rel="next" href="../asset-inventory/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.1">
+    
+    
+      
+        <title>App teardown - Tadirel — research notes</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.57a0d79d.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.fb2fffe2.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="teal" data-md-color-accent="teal">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#app-teardown-official-tadiran-consumer-app" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="Tadirel — research notes" class="md-header__button md-logo" aria-label="Tadirel — research notes" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Tadirel — research notes
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              App teardown
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="teal" data-md-color-accent="teal"  aria-hidden="true"  type="radio" name="__palette" id="__palette_0">
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+  
+
+<nav class="md-nav md-nav--primary md-nav--integrated" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="Tadirel — research notes" class="md-nav__button md-logo" aria-label="Tadirel — research notes" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Tadirel — research notes
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    App teardown
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    App teardown
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#method" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Method
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#app-architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        App architecture
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="App architecture">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-grees-own-sdk-comgreegreeplussdk" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Gree's own SDK — com.gree.greeplus.sdk.*
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-tuyas-sdk-rebranded-thingclips-comthingclipssmart" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Tuya's SDK (rebranded "ThingClips") — com.thingclips.smart.*
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-the-apps-own-backend" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. The app's own backend
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#permissions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Permissions
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#things-that-were-not-cracked" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Things that were not cracked
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../asset-inventory/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Asset inventory
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../lan-protocol/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    LAN protocol
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cloud-api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cloud API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../library-notes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Library notes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="app-teardown-official-tadiran-consumer-app">App teardown — official Tadiran consumer app</h1>
+<p>Target: the official Tadiran air-conditioner control app for Android,
+analyzed at a recent release (React Native, Hermes engine, <code>targetSdk</code>
+35-class build). Specifics below describe the app at the time of this
+research; app updates may change any of it.</p>
+<h2 id="method">Method</h2>
+<ul>
+<li>Decompiled the Android package with <strong>jadx</strong> for class listing and
+  resource IDs.</li>
+<li>Decoded the binary <code>AndroidManifest.xml</code> with <strong>androguard</strong>
+  (<code>androguard.core.axml.AXMLPrinter</code>) to read permissions and components.</li>
+<li>Extracted every literal string from <code>classes*.dex</code> to find class names,
+  URLs, and protocol constants.</li>
+<li>The React Native JS bundle is compiled <strong>Hermes bytecode</strong>, not plain
+  JS text — a plain <code>strings</code> dump over it merges adjacent string-table
+  entries with no delimiter and produces garbage. <strong>hermes-dec</strong> (PyPI, by
+  P1Security) parses the bytecode properly and exposes a clean, correctly
+  delimited string list:</li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">hermes_dec.parsers.hbc_file_parser</span><span class="w"> </span><span class="kn">import</span> <span class="n">HBCReader</span>
+
+<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s2">"index.android.bundle"</span><span class="p">,</span> <span class="s2">"rb"</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+    <span class="n">reader</span> <span class="o">=</span> <span class="n">HBCReader</span><span class="p">()</span>
+    <span class="n">reader</span><span class="o">.</span><span class="n">read_whole_file</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+<span class="c1"># reader.strings -&gt; list[str], tens of thousands of entries</span>
+</code></pre></div>
+<p>!!! note "Tooling gotcha"
+      <code>hbctool</code> (another PyPI Hermes disassembler) only supports older
+      bytecode versions and fails outright on recent Hermes builds.
+      <code>hermes-dec</code> handles the current version fine.</p>
+<h2 id="app-architecture">App architecture</h2>
+<p>React Native app packaged as a standard Android/Gradle project, bundling
+<strong>two</strong> third-party vendor SDKs for device control:</p>
+<h3 id="1-grees-own-sdk-comgreegreeplussdk">1. Gree's own SDK — <code>com.gree.greeplus.sdk.*</code></h3>
+<p>This is the one that matters for AC control. Class names are <strong>not
+obfuscated</strong> — this is a third-party AAR dropped in whole:</p>
+<ul>
+<li><code>GreePlusSdk</code> — top-level SDK entry point.</li>
+<li><code>Interface/IDeviceManager</code>, <code>Interface/IAPIManger</code>,
+  <code>Interface/OnAPIRequestListener</code>, <code>Interface/OnModDevListener</code>,
+  <code>Interface/OnScanDeviceListener</code>, <code>Interface/OnSocketListener</code>,
+  <code>Interface/OnUnBindHomeDevListener</code>, <code>Interface/LinkConfigListener</code>,
+  <code>Interface/GreeLinkConfigListener</code>, <code>Interface/OnWiFiScanListener</code> —
+  cloud API + local device management callbacks.</li>
+<li><code>apcfg/IApConfigModel</code> — classic AP-mode / SmartConfig WiFi provisioning
+  (how a brand-new unit gets joined to WiFi the first time).</li>
+<li><code>blecfg/BleConfig</code>, <code>blecfg/core/BleCommunicator</code>,
+  <code>blecfg/core/BleScanner</code>, <code>blecfg/core/ConnectManager</code> — BLE-based
+  provisioning path (newer units support BLE setup too).</li>
+<li><code>bean/BindDeviceBean</code>, <code>bean/BindDeviceResultBean</code>,
+  <code>bean/QueryStateResultBean</code>, <code>bean/ModHomeDeviceBean</code>,
+  <code>bean/ScanDeviceBean</code>, <code>bean/SyncHomeDeviceBean</code>, <code>bean/UserInfoBean</code>,
+  <code>bean/WlanInfoPackBean</code> — the usual bind/scan/query request/response DTOs.</li>
+<li><code>util/AESUtil</code>, <code>util/AesCbcHelper</code>, <code>util/MD5Util</code>,
+  <code>util/BytesHexStringTranslate</code> — crypto helpers for the pack protocol.</li>
+<li><code>util/BasePackCmd</code>, <code>util/DoorCmd</code> — command-packet builders (<code>DoorCmd</code>
+  implies the same SDK is reused by Gree for smart locks, not AC-specific).</li>
+<li><code>corelib/CoreLib</code> — likely the JNI bridge into native code.</li>
+</ul>
+<p>Literal protocol property-key strings found directly in the string pool
+(survived obfuscation because they're JSON keys/data, not identifiers):
+<code>Pow</code>, <code>Lig</code>, <code>Tur</code>. These match the Gree LAN protocol exactly — see
+<a href="../lan-protocol/">LAN protocol</a>.</p>
+<p>A native library <code>libgree.so</code> (~340 KB) ships alongside the Java classes.
+Its strings show only compiler/toolchain banners — no literal URLs or API
+paths, consistent with it being the AES/crypto primitive implementation
+rather than the networking layer.</p>
+<h3 id="2-tuyas-sdk-rebranded-thingclips-comthingclipssmart">2. Tuya's SDK (rebranded "ThingClips") — <code>com.thingclips.smart.*</code></h3>
+<p>Much heavier footprint than Gree's SDK by string-reference count. The app
+sells other smart-home categories under the same account (a <code>DoorCmd</code>-
+adjacent scope suggests locks/sensors, not just AC). Bundled native libs
+include Tuya's link/security/MMKV/Matter-support libraries.</p>
+<p><strong>Not used by this project</strong> — the AC units this research targeted are
+confirmed Gree-protocol devices. If a Tadiran AC doesn't respond to a
+Gree-protocol UDP scan, it may be on this stack instead (Tuya's
+local/cloud protocol is a different, equally-documented ecosystem — see
+<code>tinytuya</code>/<code>localtuya</code>).</p>
+<h3 id="3-the-apps-own-backend">3. The app's own backend</h3>
+<div class="admonition note">
+<p class="admonition-title">This app is a white-label platform, not Tadiran-only</p>
+<p>The bundle contains a complete onboarding flow for <strong>Ferroli</strong>, a
+different HVAC brand (<code>FerroliConnectFirstScreen</code>,
+<code>FerroliConnectSecondScreen</code>, <code>ferroliConnectScreen:step1_*</code>/<code>step2_*</code>
+translation keys). Tadiran's app is one brand's skin on a backend/app
+platform shared across vendors, not a Tadiran-specific build.</p>
+</div>
+<ul>
+<li><code>https://api.tadiran-iot.co.il</code> — the app's own account/device-layer
+  backend. A second, deeper pass over the Hermes string table (see
+  <a href="../cloud-api/">Cloud API</a> for the full breakdown) recovered real
+  REST path prefixes (<code>/tadiran-mobile-app/api/v1</code>,
+  <code>/tadiran-mobile-app/api/v2</code>, <code>/mobile-app/api/v1</code>,
+  <code>/eu/management/api/v1</code>) and dozens of resource paths
+  (<code>/devices/</code>, <code>/user/</code>, <code>/shared-users/</code>, <code>/models/ai/recognize/</code>,
+  etc.), though the host and path prefixes were never observed
+  concatenated as a single literal, so the exact pairing is inferred, not
+  directly confirmed.</li>
+<li><strong>AWS Cognito</strong> identifiers, recovered from the native (dex) string
+  pool rather than the JS bundle: User Pool ID <code>eu-west-1_WG1VW4YTe</code>,
+  Identity Pool ID <code>eu-west-1:6f339b1c-924e-4e71-a751-d32bfe454e74</code>. Both
+  <code>eu-west-1</code>, matching the AppSync endpoint's region.</li>
+<li><strong>AWS AppSync GraphQL</strong>:
+  <code>https://hz5g3vbxy5h2jhpjclyvzfhiju.appsync-api.eu-west-1.amazonaws.com/graphql</code>,
+  matched by a validation regex also embedded in the JS bundle:
+  <code>^https:\/\/\w{26}\.appsync\-api\.\w{2}(?:(?:\-\w{2,})+)\-\d\.amazonaws.com\/graphql$</code>).
+  AWS Amplify/Cognito libraries are bundled (<code>aws-appsync</code>,
+  <code>aws-appsync-auth-link</code>, Cognito identity/idp endpoints for every AWS
+  region). Two literal GraphQL documents were recovered verbatim from the
+  Hermes string table:</li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="k">query</span><span class="w"> </span><span class="nf">LastData</span><span class="p">(</span><span class="nv">$asset_id</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">!)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="n">lastData</span><span class="p">(</span><span class="n">asset_id</span><span class="p">:</span><span class="w"> </span><span class="nv">$asset_id</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">asset_id</span>
+<span class="w">    </span><span class="n">data</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+
+<span class="k">subscription</span><span class="w"> </span><span class="nf">UpdatedShadow</span><span class="p">(</span><span class="nv">$asset_id</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">!,</span><span class="w"> </span><span class="nv">$shadow_name</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="n">updatedShadow</span><span class="p">(</span><span class="n">asset_id</span><span class="p">:</span><span class="w"> </span><span class="nv">$asset_id</span><span class="p">,</span><span class="w"> </span><span class="n">shadow_name</span><span class="p">:</span><span class="w"> </span><span class="nv">$shadow_name</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">asset_id</span>
+<span class="w">    </span><span class="n">shadow_name</span>
+<span class="w">    </span><span class="n">data</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>This confirms the app's own cloud layer uses a <strong>device-shadow
+  pattern</strong> (Redux-slice identifiers <code>desiredList</code>/<code>reported</code>/
+  <code>deviceDesiredShadow</code>/<code>addDesired</code>/<code>removeDesired</code> also found in the
+  bundle) — commands are likely sent as a GraphQL mutation that patches a
+  "desired" shadow document, reconciled downstream against the real unit.
+  The actual mutation document was not found as a literal string — see
+  <a href="../cloud-api/">Cloud API</a> for why, and what that means for
+  reimplementing it.</p>
+<ul>
+<li><strong>Gree's own cloud infrastructure</strong> is referenced too: <code>grih.gree.com</code>
+  and its regional variants <code>eugrih.gree.com</code>, <code>nagrih.gree.com</code>,
+  <code>hkgrih.gree.com</code>, <code>ingrih.gree.com</code>, <code>megrih.gree.com</code>,
+  <code>sagrih.gree.com</code>, <code>augrih.gree.com</code>, <code>tmpgrih.gree.com</code> (Gree's "GRIH" —
+  Gree Region IoT Hub — cloud servers), plus discovery/routing hosts
+  <code>&lt;region&gt;.dis.gree.com</code> (e.g. <code>ru.dis.gree.com</code>, <code>au.dis.gree.com</code>,
+  <code>in.dis.gree.com</code>, <code>me.dis.gree.com</code>, <code>na.dis.gree.com</code>, <code>sa.dis.gree.com</code>,
+  <code>ts.dis.gree.com</code>, <code>eb.dis.gree.com</code>, <code>hk.dis.gree.com</code>) and
+  <code>*.as.gree.com</code> — bundled as TLS pinning certificates
+  (<code>_.as.gree.com.cer</code>, <code>_.gree.com.cer</code>) and referenced in the native
+  string pool. Whether the app actually talks to these directly, or only
+  through its own AppSync backend, wasn't determined from static analysis
+  alone — that needs live traffic capture.</li>
+</ul>
+<h3 id="permissions">Permissions</h3>
+<p>Notable ones from the app's manifest: <code>BLUETOOTH</code>, <code>BLUETOOTH_SCAN</code>,
+<code>BLUETOOTH_CONNECT</code>, <code>ACCESS_FINE_LOCATION</code>, <code>ACCESS_BACKGROUND_LOCATION</code>,
+<code>NEARBY_WIFI_DEVICES</code>, <code>CHANGE_WIFI_STATE</code>, <code>CHANGE_WIFI_MULTICAST_STATE</code>,
+<code>ACCESS_WIFI_STATE</code>, <code>CAMERA</code>, <code>NFC</code> — all consistent with BLE/AP-mode
+WiFi device provisioning (<code>CHANGE_WIFI_MULTICAST_STATE</code> in particular is
+needed for UDP broadcast discovery on the LAN protocol).</p>
+<h2 id="things-that-were-not-cracked">Things that were <em>not</em> cracked</h2>
+<ul>
+<li>Exact REST/GraphQL paths used by the app's own backend, and the real
+  "send a command" mutation against the AppSync backend — not present as
+  literal strings anywhere in the analyzed build; would require either
+  further static work against obfuscated/minified logic, or capturing
+  live HTTPS traffic (mitmproxy + Frida SSL-unpinning) while using the
+  real app.</li>
+<li>Whether <code>libgree.so</code> embeds a second, cloud-facing protocol variant or
+  is purely the LAN-protocol crypto helper — no literal endpoint strings
+  in the binary either way.</li>
+<li>A full Java decompile of the entire app (tens of thousands of classes)
+  was attempted but is extremely slow and wasn't completed/used; all
+  findings above came from targeted string extraction plus the Hermes
+  bundle parse, not a full source dump.</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.sections", "navigation.expand", "content.code.copy", "content.code.annotate", "toc.integrate"], "search": "../assets/javascripts/workers/search.a7633da7.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.a5f9d56c.min.js"></script>
+      
+    
+  </body>
+</html>

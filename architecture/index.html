@@ -1,0 +1,683 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Reverse-engineering notes and protocol reference behind the Tadirel LAN AC controller.">
+      
+      
+      
+      
+        <link rel="prev" href="../cloud-api/">
+      
+      
+        <link rel="next" href="../library-notes/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.1">
+    
+    
+      
+        <title>Architecture - Tadirel — research notes</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.57a0d79d.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.fb2fffe2.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="teal" data-md-color-accent="teal">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#tadirels-architecture" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="Tadirel — research notes" class="md-header__button md-logo" aria-label="Tadirel — research notes" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Tadirel — research notes
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Architecture
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="teal" data-md-color-accent="teal"  aria-hidden="true"  type="radio" name="__palette" id="__palette_0">
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+  
+
+<nav class="md-nav md-nav--primary md-nav--integrated" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="Tadirel — research notes" class="md-nav__button md-logo" aria-label="Tadirel — research notes" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Tadirel — research notes
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../app-teardown/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    App teardown
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../asset-inventory/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Asset inventory
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../lan-protocol/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    LAN protocol
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cloud-api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cloud API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#why-this-shape" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why this shape
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#device-pairing-naming-and-liveness" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Device pairing, naming, and liveness
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#explicitly-out-of-scope-for-now" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Explicitly out of scope (for now)
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../library-notes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Library notes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="tadirels-architecture">Tadirel's architecture</h1>
+<p>Layout modeled on <code>mon231/vidspy</code> (one shared Python backend, two thin
+frontends — desktop via Eel, Android via Chaquopy):</p>
+<div class="highlight"><pre><span></span><code>backend/                     shared Python core, no UI code in here
+  tadiran_ac_backend/
+    __init__.py
+    protocol_props.py        Props enum + human labels/choices (UI metadata)
+    store.py                 JSON-file device store (mac -&gt; ip/mid/name/last_seen)
+    arp.py                   cross-platform ARP table lookup (MAC -&gt; IP fallback)
+    device.py                thin wrapper around greeclimate.AirConditionerDevice:
+                              bind/status/apply, command-confirmation polling
+    scanner.py                the "5 probes over 12s, stream new results" scan
+    loop_runner.py            shared background asyncio event loop
+    api.py                    the ONLY surface both frontends call:
+                               start_scan / poll_scan / list_known_devices /
+                               set_device_name / rename_device / remove_device /
+                               get_status / send_command / capabilities
+  requirements.txt
+
+desktop/                     "PC app"
+  app.py                     Eel entry point, exposes backend.api functions
+                              to JS, opens a native Chrome/Edge app window
+  web/
+    index.html
+    style.css
+    app.js                   polls scan, renders device list + control panel
+  requirements.txt
+
+app/                         "Android app" (Chaquopy)
+  build.gradle               module build file, Chaquopy plugin + python config
+  src/main/
+    AndroidManifest.xml
+    java/com/tadirel/app/
+      MainActivity.kt         device list screen (scan/refresh/pair/power)
+      DeviceDetailActivity.kt full control screen (mode/temp/fan/swing/...)
+      PyBridge.kt              thin Kotlin wrapper: Chaquopy calls into
+                                backend.api, JSON in/out
+      InsetsUtil.kt            edge-to-edge window inset handling
+    python/
+      android_bridge.py        Android-only JSON bridge over backend.api
+      greeclimate/              vendored copy (see library-notes.md for why)
+    res/layout, res/values     native Android views
+
+build.gradle, settings.gradle, gradle.properties, gradlew*   root Gradle wrapper
+tests/                        pytest against backend/ only (frontends are thin)
+docs/                         this knowledge base (local only, not committed)
+</code></pre></div>
+<h2 id="why-this-shape">Why this shape</h2>
+<ul>
+<li><strong>One backend, two UIs.</strong> All protocol/state logic (scanning, binding,
+  property get/set, the device name store) lives once in
+  <code>backend/tadiran_ac_backend/</code>. Desktop and Android both call the exact
+  same handful of functions in <code>api.py</code> — neither re-implements any
+  networking.</li>
+<li><strong>Desktop = Eel.</strong> Eel runs the Python backend in-process and opens a
+  local web page in an app-mode browser window — gives a "real app" feel
+  with normal HTML/CSS/JS for the UI, zero extra packaging complexity, and
+  is exactly the pattern <code>vidspy/desktop/app.py</code> uses.</li>
+<li><strong>Android = Chaquopy, native UI.</strong> Chaquopy embeds a Python interpreter
+  in the Android app and lets Kotlin call into <code>backend.api</code> directly
+  (JSON strings in, JSON strings out — same shape Eel uses on desktop, so
+  <code>api.py</code>'s functions don't need to know which frontend is calling). The
+  UI itself is native Kotlin views (not a WebView), matching vidspy's
+  Android app, which also uses native views with Chaquopy underneath.</li>
+<li><strong>Scanning contract.</strong> <code>scanner.py</code> sends the Gree "scan" probe up to 5
+  times, once every 2 seconds, while listening continuously; stops
+  entirely at the 12-second mark. Any device reply is reported the
+  instant it arrives (via an internal queue), not batched at the end —
+  both UIs poll that queue every ~300ms while a scan is running so new
+  rows appear live, and both show a "Refresh" action that just starts a
+  new scan.</li>
+<li><strong>Device identity = MAC.</strong> The scan reply's MAC is the stable key for
+  naming/storing a unit (IP can change via DHCP). <code>store.py</code> persists
+  <code>{mac: {ip, mid, name, last_seen}}</code> as local JSON — no server, no cloud
+  account, matches the no-cloud stance from <a href="../cloud-api/">Cloud API</a>.</li>
+<li><strong>Control screen capabilities are data-driven.</strong> <code>protocol_props.py</code>
+  describes each controllable property (label, kind: toggle/enum/int-range,
+  and for enums the choice labels) so both the HTML UI and the native
+  Android UI can render the same control set from one source of truth
+  without hardcoding widgets per platform.</li>
+<li><strong>Command confirmation, not just send-and-trust.</strong> <code>send_command</code>
+  applies the change, then polls the unit's real status until the changed
+  property reads back as requested (or a short timeout elapses) — both
+  UIs show the AC's actual latest state, and warn if it hasn't confirmed
+  yet, rather than assuming success the instant a packet goes out.</li>
+</ul>
+<h2 id="device-pairing-naming-and-liveness">Device pairing, naming, and liveness</h2>
+<p>A "pairing" is a user-assigned name attached to a MAC address — this is
+the only thing that gets persisted to <code>store.py</code>'s JSON file. Unnamed scan
+hits are transient (shown only in the live subnet-scan results while a
+scan is running); giving one a name is what promotes it into the
+persisted "known devices" list.</p>
+<ul>
+<li><strong>Known devices list</strong> (always visible, no scan needed to populate it):
+  every <code>{mac: name, ...}</code> entry in the store. Each row shows name, MAC,
+  resolved IP (or "unreachable"), a trash icon (deletes the pairing), and,
+  once a row is selected, an edit icon to rename it.</li>
+<li><strong>Liveness check for known devices</strong> (run on load and on refresh,
+  deliberately cheap — not the full 12s broadcast scan):</li>
+<li>Unicast a single "scan" probe to the device's last-known IP
+     (~1.5s timeout). A matching reply = alive, update stored IP.</li>
+<li>If that fails, fall back to an <strong>ARP table lookup</strong> by MAC to find
+     the current IP (handles DHCP lease changes without re-scanning the
+     whole subnet). If ARP resolves an IP, the device is treated as
+     reachable and the store's IP is updated.</li>
+<li>If the ARP table has <strong>no entry at all</strong> for that MAC, the device is
+     marked unreachable: its row is grayed out and cannot be selected for
+     control (the trash icon still works, so a genuinely gone unit can be
+     unpaired).</li>
+<li><strong>Subnet scan results</strong> (the explicit 5-probe/12s broadcast flow) are
+  for <em>finding</em> devices, named or not. A result whose MAC is already in
+  the store shows its existing name; a result with no stored name shows a
+  "Pair" affordance.</li>
+</ul>
+<h2 id="explicitly-out-of-scope-for-now">Explicitly out of scope (for now)</h2>
+<ul>
+<li>WiFi/BLE pairing of a <em>brand-new</em> unit (the AP-mode/BLE provisioning
+  flow in Gree's SDK, see <a href="../app-teardown/">App teardown</a>). Tadirel only
+  controls units already joined to the LAN.</li>
+<li>Tadiran/Gree cloud control (see <a href="../cloud-api/">Cloud API</a>).</li>
+<li>Tuya-protocol devices — different protocol family, not implemented
+  here.</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.sections", "navigation.expand", "content.code.copy", "content.code.annotate", "toc.integrate"], "search": "../assets/javascripts/workers/search.a7633da7.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.a5f9d56c.min.js"></script>
+      
+    
+  </body>
+</html>

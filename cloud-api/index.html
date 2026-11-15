@@ -1,0 +1,846 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Reverse-engineering notes and protocol reference behind the Tadirel LAN AC controller.">
+      
+      
+      
+      
+        <link rel="prev" href="../lan-protocol/">
+      
+      
+        <link rel="next" href="../architecture/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.1">
+    
+    
+      
+        <title>Cloud API - Tadirel — research notes</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.57a0d79d.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.fb2fffe2.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="teal" data-md-color-accent="teal">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#the-remotecloud-control-path-whats-known-what-isnt-and-why-tadirel-doesnt-use-it" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="Tadirel — research notes" class="md-header__button md-logo" aria-label="Tadirel — research notes" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Tadirel — research notes
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Cloud API
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="teal" data-md-color-accent="teal"  aria-hidden="true"  type="radio" name="__palette" id="__palette_0">
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+  
+
+<nav class="md-nav md-nav--primary md-nav--integrated" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="Tadirel — research notes" class="md-nav__button md-logo" aria-label="Tadirel — research notes" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Tadirel — research notes
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../app-teardown/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    App teardown
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../asset-inventory/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Asset inventory
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../lan-protocol/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    LAN protocol
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cloud API
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cloud API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#backend-architecture-confirmed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Backend architecture (confirmed)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Backend architecture (confirmed)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#rest-resource-paths-literal-strings-high-confidence" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        REST resource paths (literal strings, high confidence)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#operation-inventory-redux-action-type-names-lower-confidence-as-urls" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Operation inventory (Redux action-type names, lower confidence as URLs)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#transportheader-hints" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Transport/header hints
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#whats-still-missing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What's still missing
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#public-reverse-engineering-landscape" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Public reverse-engineering landscape
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#why-tadirel-doesnt-chase-it-further" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why Tadirel doesn't chase it further
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#if-someone-wants-to-pick-this-up-anyway" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        If someone wants to pick this up anyway
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../library-notes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Library notes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="the-remotecloud-control-path-whats-known-what-isnt-and-why-tadirel-doesnt-use-it">The remote/cloud control path — what's known, what isn't, and why Tadirel doesn't use it</h1>
+<p>Short version: <strong>it's not publicly documented, and Tadirel deliberately
+does not reimplement it.</strong> Everything below is the research trail, kept
+for reference in case someone wants to pick it up later. A second pass
+through the decoded app's JS bundle (see <a href="../app-teardown/">App teardown</a>
+for how the Hermes bytecode was parsed) turned up a much fuller REST API
+surface than the first pass found — recorded here.</p>
+<h2 id="backend-architecture-confirmed">Backend architecture (confirmed)</h2>
+<p>The app's backend is a <strong>hybrid REST + GraphQL + AWS Cognito</strong> stack,
+and — new finding — it's a <strong>white-label platform serving more than one
+HVAC brand</strong>: the bundle also contains a complete Ferroli onboarding flow
+(<code>FerroliConnectFirstScreen</code>, <code>FerroliConnectSecondScreen</code>,
+<code>ferroliConnectScreen:step1_*</code>/<code>step2_*</code> translation keys). Tadiran's app
+is one brand's skin on a shared backend/app platform, not a bespoke
+Tadiran-only system.</p>
+<ul>
+<li><strong>Auth</strong>: AWS Cognito, not a custom login endpoint. Concrete identifiers
+  recovered from the app's native (dex) string pool:</li>
+<li>Cognito User Pool ID: <code>eu-west-1_WG1VW4YTe</code></li>
+<li>Cognito Identity Pool ID: <code>eu-west-1:6f339b1c-924e-4e71-a751-d32bfe454e74</code></li>
+<li>Both are <code>eu-west-1</code>, matching the AppSync endpoint's region exactly —
+    strong confirmation these belong to the same backend. No literal App
+    Client ID was found with confidence (one 26-character lowercase
+    alphanumeric candidate, <code>312eed498hlvku8pdup0lvfpir</code>, sits near
+    version-number strings in the pool with no corroborating context —
+    treat as unconfirmed, not a finding).</li>
+<li>No custom <code>/login</code>, <code>/signin</code>, <code>/register</code>, <code>/otp</code>, or <code>/refresh</code>
+    paths exist anywhere in the bundle — consistent with auth being
+    handled entirely by the Cognito SDK (SRP login, token refresh,
+    <code>RespondToAuthChallenge</code>/<code>AdminRespondToAuthChallenge</code> are generic AWS
+    SDK symbol names also present, not app-specific endpoints).</li>
+<li><strong>GraphQL (AWS AppSync)</strong>: <code>https://hz5g3vbxy5h2jhpjclyvzfhiju.appsync-api.eu-west-1.amazonaws.com/graphql</code>.
+  Literal <code>/graphql</code>, <code>/mqtt</code>, and <code>/realtime</code> path strings are all
+  present in the bundle, consistent with AppSync's standard real-time
+  subscription transport (AppSync multiplexes GraphQL subscriptions over
+  an MQTT-over-WebSocket channel). Two literal operations survived
+  Apollo/Amplify's codegen compilation (most queries/mutations get
+  compiled to AST objects, not kept as text — see "What's still missing"
+  below):</li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="k">query</span><span class="w"> </span><span class="nf">LastData</span><span class="p">(</span><span class="nv">$asset_id</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">!)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="n">lastData</span><span class="p">(</span><span class="n">asset_id</span><span class="p">:</span><span class="w"> </span><span class="nv">$asset_id</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">asset_id</span>
+<span class="w">    </span><span class="n">data</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+
+<span class="k">subscription</span><span class="w"> </span><span class="nf">UpdatedShadow</span><span class="p">(</span><span class="nv">$asset_id</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">!,</span><span class="w"> </span><span class="nv">$shadow_name</span><span class="p">:</span><span class="w"> </span><span class="nb">String</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="n">updatedShadow</span><span class="p">(</span><span class="n">asset_id</span><span class="p">:</span><span class="w"> </span><span class="nv">$asset_id</span><span class="p">,</span><span class="w"> </span><span class="n">shadow_name</span><span class="p">:</span><span class="w"> </span><span class="nv">$shadow_name</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">asset_id</span>
+<span class="w">    </span><span class="n">shadow_name</span>
+<span class="w">    </span><span class="n">data</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>Redux-slice identifiers (<code>deviceDesiredShadow</code>, <code>addDesired</code>,
+  <code>removeDesired</code>, <code>desiredList</code>, <code>reported</code>) confirm a <strong>device-shadow</strong>
+  pattern: the app writes a "desired" state, something downstream
+  reconciles it against the real unit, "reported" state flows back.
+- <strong>REST API</strong>: versioned, brand-prefixed base paths, found as literal
+  strings:
+  - <code>/tadiran-mobile-app/api/v1</code>
+  - <code>/tadiran-mobile-app/api/v2</code>
+  - <code>/mobile-app/api/v1</code> (brand-generic variant/fallback)
+  - <code>/eu/management/api/v1</code> (a separate "management" subsystem — likely
+    installer/service/warranty tooling, not the consumer app's main
+    surface; <code>activateWarrantyAsyncThunk</code>, <code>application-restriction/</code>,
+    and <code>service/</code> sit in the same region of the string pool)
+  - Host is presumably <code>api.tadiran-iot.co.il</code> per the earlier pass, but
+    that association wasn't re-confirmed by this pass (the host and the
+    path prefixes never appeared adjacent as one concatenated literal).</p>
+<h3 id="rest-resource-paths-literal-strings-high-confidence">REST resource paths (literal strings, high confidence)</h3>
+<p>These appeared as plain path-segment string literals (not Redux
+action-type names — see the caveat below), most with the trailing slash
+typical of a REST resource base:</p>
+<div class="highlight"><pre><span></span><code>/devices/                          /devices/AC/combined-rules/
+/devices/create/                   /devices/AC/grouped-commands/
+/devices/schedules/                /devices/schedules/all_rooms/
+/devices/shabbat_mode/             /devices/timers/
+/devices/tips/                     /devices/quick-actions/
+/devices/quick-actions/defaults/   /devices/invitations/
+/devices/sub-units/invitations/    /sub-devices/
+/sub-units/                        /vrf-box/
+/groups/                           /shared-users/
+/shared-users/invite/              /shared-users/sub-unit/invite/
+/invitations/                      /invitations/accept/
+/invitations/reject/               /user/
+/user/update/                      /user/consumption-history/
+/user/consumption-summary/         /user/fcm-token/update/
+/self-profile/                     /self-profile/delete/
+/manufacturer-token/               /models/
+/models/ai/                        /models/ai/recognize/
+/models/ai/upload-image/           /smart-ir/
+/questionnaire/                    /config/
+/test-command/                     /tadiran-email-check/
+</code></pre></div>
+<p>Notable ones:</p>
+<ul>
+<li><code>/models/ai/recognize/</code> + <code>/models/ai/upload-image/</code> — the app can
+  identify an AC model from a photo (upload an image, get a model match).</li>
+<li><code>/smart-ir/</code> — IR-blaster-based "dumb" AC support, a separate path from
+  the WiFi/Gree-protocol device flow this project actually uses.</li>
+<li><code>/tadiran-email-check/</code> — brand-specific (not <code>/mobile-app-email-check/</code>),
+  confirming the white-label platform namespaces at least some endpoints
+  per brand even though most paths are shared.</li>
+<li><code>/test-command/</code> — exists as its own resource, separate from whatever
+  the real device-command endpoint is; possibly a connectivity/dry-run
+  check.</li>
+</ul>
+<h3 id="operation-inventory-redux-action-type-names-lower-confidence-as-urls">Operation inventory (Redux action-type names, lower confidence as URLs)</h3>
+<p>The bundle is full of <code>createAsyncThunk</code>-style Redux Toolkit action names
+ending in <code>AsyncThunk</code>, each with <code>/pending</code>, <code>/fulfilled</code>, <code>/rejected</code>
+suffix variants also present in the pool. These describe <strong>operations</strong>,
+not necessarily literal URL paths (a Redux Toolkit thunk's type string is
+usually <code>"sliceName/thunkName"</code>, and Hermes's string deduplication means
+what we see starting with <code>/</code> could be the tail half of such a type
+string rather than a URL). Treat this list as "operations that exist",
+not "endpoints that exist":</p>
+<div class="highlight"><pre><span></span><code>getDevicesStatusesAsyncThunk        commandDeviceAsyncThunk
+commandBulkSubDeviceAsyncThunk      commandGroupDeviceAsyncThunk
+commandDeviceCombinedRuleAsyncThunk addDeviceAsyncThunk
+addSubDeviceAsyncThunk              updateDeviceAsyncThunk
+deleteDeviceAsyncThunk              getDeviceOtaStatusAsyncThunk
+getSubDeviceShadowAsyncThunk        getSubDevicesShadowAsyncThunk
+discoverVrfBoxDevicesAsuncThunk     getVrfBoxDevicesAsuncThunk
+getACModelsAsyncThunk               getACModelBySerialNumber
+addUserAsyncThunk                   getUserAsyncThunk
+getMyUsersAsyncThunk                deleteUserAsyncThunk
+patchUserAsyncThunk                 getSelfProfileDataAsyncThunk
+deleteSharedUserAsyncThunk          deleteSharedUserDevicesAsyncThunk
+activateDeviceScheduleAsyncThunk    createDeviceScheduleAsyncThunk
+deleteSelectedDeviceScheduleAsyncThunk
+updateSelectedDeviceScheduleAsyncThunk
+getDevicesSchedulesAsyncThunk       getAllRoomsSchedulesAsyncThunk
+setSelectedDeviceTimerAsyncThunk    deleteSelectedDeviceTimer
+updateSelectedDeviceTimerAsyncThunk getDevicesTimersAsyncThunk
+fetchDeviceQuestionnaire            patchDeviceQuestionnaire
+fetchConsumptionHistoryAsyncThunk   fetchConsumptionSummaryAsyncThunk
+getQuickActionsAsyncThunk           upsertQuickActionAsyncThunk
+deleteQuickActionAsyncThunk         signOutAsyncThunk
+rateTipAsyncThunk                   getTipsAsyncThunk
+setFiltersReminderAsyncThunk        activateWarrantyAsyncThunk
+setSmartIRFetchedInfo
+</code></pre></div>
+<p>(Shabbat-mode scheduling — <code>fetchShabbatTimeDataAsyncThunk</code>,
+<code>setShabbatModeStatusAndLocationAsyncThunk</code>, and about a dozen related
+thunks — is a real, fairly elaborate feature: AC schedules that respect
+Shabbat/holiday timing rules, specific to the Israeli market.)</p>
+<h3 id="transportheader-hints">Transport/header hints</h3>
+<p>Literal strings <code>Authorization</code>, <code>x-api-key</code>, <code>Content-Type</code>, <code>BASE_URL</code>,
+<code>baseURL</code>/<code>baseUrl</code> all exist in the bundle. These are generic HTTP client
+symbol names (the kind any fetch/axios-based API client would reference),
+not proof of specific header <em>values</em> — no actual API key or bearer token
+format was recovered.</p>
+<h2 id="whats-still-missing">What's still missing</h2>
+<ul>
+<li>The actual <strong>command</strong> request/response shape: which REST path takes
+  the Gree protocol command, what JSON body it expects (raw <code>Pow</code>/<code>Mod</code>/
+  <code>SetTem</code>-style keys? Tuya-style <code>{"code": ..., "value": ...}</code> DPs, given
+  the app also bundles Tuya's SDK? Something else entirely?), and what
+  HTTP method it uses. <code>/test-command/</code> and <code>commandDeviceAsyncThunk</code>
+  exist, but their payload format wasn't recoverable from static strings.</li>
+<li>The GraphQL <strong>mutation</strong> that writes to the device shadow (the
+  write-side of the shadow pattern) — not found as a literal string;
+  almost certainly compiled to an AST object by Apollo/Amplify codegen
+  rather than kept as text, same as most other GraphQL operations here.</li>
+<li>Request authentication details beyond "it's Cognito" — no App Client
+  ID confirmed, no observed token format, no confirmation of whether REST
+  calls carry a Cognito ID token, access token, or an AppSync-style API
+  key via <code>x-api-key</code>.</li>
+<li>Whether commands reach the unit via Gree's own cloud
+  (<code>grih.gree.com</code> and regional variants, <code>*.dis.gree.com</code>, bundled as
+  TLS-pinned hosts — see <a href="../app-teardown/">App teardown</a>), via the
+  vendor's own Lambda-behind-AppSync/REST layer, or some hybrid of both.</li>
+</ul>
+<h2 id="public-reverse-engineering-landscape">Public reverse-engineering landscape</h2>
+<p>Checked for existing community work on Gree's cloud API specifically:</p>
+<ul>
+<li>The LAN protocol is thoroughly documented and has multiple independent
+  open-source implementations (see <a href="../lan-protocol/">LAN protocol</a>).</li>
+<li>The cloud/remote protocol is <strong>not</strong>. Multiple long-running Home
+  Assistant / SmartThings / openHAB community threads about Gree
+  integrations explicitly say the cloud side is essentially undocumented
+  ("pretty hard to get any documentation for the EWPE/gree.com cloud").
+  No public <code>openapi.gree.com</code>, no public OAuth flow, no community client
+  library for it exists, unlike the LAN side.</li>
+<li>The vendor's own IoT backend has zero public footprint — no developer
+  portal, nothing indexed, despite now having a much fuller picture of
+  its URL surface than a typical "zero public footprint" API would
+  suggest existed.</li>
+</ul>
+<h2 id="why-tadirel-doesnt-chase-it-further">Why Tadirel doesn't chase it further</h2>
+<ol>
+<li>It would still require capturing live HTTPS traffic from the real app
+   (mitmproxy + Frida SSL-unpinning on a rooted/emulated device) to see
+   actual request/response bodies — the path <em>names</em> are now known, but
+   not a single full request/response pair, auth header, or payload shape.</li>
+<li>Even captured, it'd depend on Cognito-issued, presumably short-lived
+   auth tokens tied to a real account — fragile to reimplement and
+   maintain compared to the LAN protocol, which needs no account at all.</li>
+<li>It is <strong>not</strong> demonstrably "open and free to use" the way the LAN
+   protocol is — nothing here confirms the vendor's actual terms bless
+   third-party reimplementation of their private cloud API.</li>
+<li>The actual goal — "control my own AC, including from outside my
+   house" — is fully achievable by tunneling into the LAN (Tailscale/
+   WireGuard) and using the local protocol, with none of the above risk.
+   That's the path Tadirel takes; see <a href="../architecture/">Architecture</a>.</li>
+</ol>
+<h2 id="if-someone-wants-to-pick-this-up-anyway">If someone wants to pick this up anyway</h2>
+<p>Now that real path names exist, the lowest-risk next static step (still
+short of live traffic capture) would be probing which of these paths
+resolve on <code>api.tadiran-iot.co.il</code> with an unauthenticated <code>OPTIONS</code> or
+<code>GET</code> request (e.g. <code>/config/</code> sounds like exactly the kind of endpoint
+an app would call <em>before</em> authenticating, to fetch its own AWS Amplify
+config — which would hand over the App Client ID this pass couldn't
+confirm). Beyond that, the concrete next step is still: install the app
+on a device you can MITM (or an emulator + Frida), trigger a real "send
+command" action while on mobile data (not WiFi, to force it through the
+cloud path rather than Tadirel's own LAN path), and capture the actual
+request. Once you have one real request, the bind-time local key (see
+<a href="../lan-protocol/">LAN protocol</a>) is worth testing as a decryption key for
+any encrypted payload field in that request/response — the local and
+cloud paths plausibly reuse the same per-device key for their respective
+<code>pack</code>-style payloads, though this is <strong>unverified speculation</strong>, not a
+confirmed finding.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.sections", "navigation.expand", "content.code.copy", "content.code.annotate", "toc.integrate"], "search": "../assets/javascripts/workers/search.a7633da7.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.a5f9d56c.min.js"></script>
+      
+    
+  </body>
+</html>

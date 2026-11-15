@@ -1,0 +1,673 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Reverse-engineering notes and protocol reference behind the Tadirel LAN AC controller.">
+      
+      
+      
+      
+        <link rel="prev" href="../architecture/">
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.1">
+    
+    
+      
+        <title>Library notes - Tadirel — research notes</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.57a0d79d.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.fb2fffe2.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="teal" data-md-color-accent="teal">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#greeclimate-library-notes-found-while-building-against-real-hardware" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="Tadirel — research notes" class="md-header__button md-logo" aria-label="Tadirel — research notes" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Tadirel — research notes
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Library notes
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="teal" data-md-color-accent="teal"  aria-hidden="true"  type="radio" name="__palette" id="__palette_0">
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+  
+
+<nav class="md-nav md-nav--primary md-nav--integrated" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="Tadirel — research notes" class="md-nav__button md-logo" aria-label="Tadirel — research notes" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Tadirel — research notes
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../app-teardown/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    App teardown
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../asset-inventory/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Asset inventory
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../lan-protocol/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    LAN protocol
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cloud-api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cloud API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Library notes
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Library notes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#quirks-that-actually-mattered-desktop" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Quirks that actually mattered (desktop)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#getting-it-running-on-android-chaquopy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Getting it running on Android (Chaquopy)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#capability-discovery" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Capability discovery
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="greeclimate-library-notes-found-while-building-against-real-hardware"><code>greeclimate</code> library notes (found while building against real hardware)</h1>
+<p>Package: <code>greeclimate</code> on PyPI (v4.3.0 used here). Async (<code>asyncio</code>), used
+by Home Assistant's <code>gree</code> integration. Modules used by <code>backend/</code>:
+<code>greeclimate.discovery.Discovery</code>, <code>greeclimate.device_factory.create_device</code>,
+<code>greeclimate.air_conditioner.AirConditionerDevice</code>/<code>Props</code>,
+<code>greeclimate.cipher.CipherV1</code>, <code>greeclimate.deviceinfo.DeviceInfo</code>.</p>
+<h2 id="quirks-that-actually-mattered-desktop">Quirks that actually mattered (desktop)</h2>
+<ol>
+<li>
+<p><strong><code>send()</code> does not wait for a reply.</strong> <code>Device.send()</code>'s own docstring
+   says "completion does not imply a reply" — it only waits for the local
+   socket write to drain. The actual reply arrives later via
+   <code>datagram_received()</code>. Reading a property (<code>device.power</code>, etc.) right
+   after <code>await device.update_state()</code> or <code>await device.push_state_update()</code>
+   with no delay will see stale/<code>None</code> data. <strong>Fix:</strong> always
+   <code>await asyncio.sleep(~1)</code> after <code>update_state()</code>/<code>push_state_update()</code>
+   before reading properties.</p>
+</li>
+<li>
+<p><strong><code>device.bind(key=..., cipher=...)</code> does not open a transport.</strong> Its
+   docstring says so explicitly ("does not open a transport"), and its
+   implementation just sets <code>self.device_cipher = cipher</code> and returns.
+   Calling any send afterwards raises <code>DeviceNotBoundError</code> because
+   <code>_ensure_bound()</code> only (re)binds <code>if not self.device_cipher</code> — and a
+   manually-set cipher makes it think it's already fully bound. Tadirel's
+   backend always does a fresh full bind per interaction rather than
+   trying to cache/reuse the per-device key across process runs via this
+   method — it's cheap (one local UDP round-trip, not a network call) and
+   avoids the issue entirely.</p>
+</li>
+<li>
+<p><strong>Discovery vs. per-IP bind both need <code>DeviceInfo</code>.</strong> <code>create_device()</code>
+   needs a populated <code>DeviceInfo</code> (ip, port, mac, name, mid) to pick the
+   right device class (dispatch is by <code>mid</code>, see
+   <code>greeclimate.device_factory.DEVICE_TYPES</code>/<code>KNOWN_MID_PROFILES</code>). You can
+   either get one from <code>Discovery.scan()</code> (broadcast or unicast) or
+   construct one directly if you already know those fields from a
+   previous scan, skipping the multi-second scan wait entirely. Tadirel's
+   device store caches <code>mid</code> specifically so later unicast
+   health-checks/binds can skip rediscovery.</p>
+</li>
+<li>
+<p><strong>Windows note (<code>asyncio.windows_events</code>).</strong> Running discovery across
+   multiple local network interfaces (VPN/virtual adapters with no real
+   route) throws harmless <code>OSError: [WinError 1231] The network location
+   cannot be reached</code> from <code>ProactorEventLoop</code>'s internals — caught
+   per-interface by <code>asyncio.gather(..., return_exceptions=True)</code> inside
+   <code>Discovery.search_devices()</code>, so it doesn't break the scan; it just
+   prints noise to stderr. Safe to ignore.</p>
+</li>
+<li>
+<p><strong>Enum encodings worth knowing:</strong></p>
+</li>
+<li><code>quiet</code> setter maps <code>True</code> → <code>2</code>, <code>False</code> → <code>0</code> (not <code>1</code>) — reading
+     back <code>Props.QUIET</code> as a plain int for display should treat any
+     non-zero value as "on".</li>
+<li><code>target_temperature</code> with <code>temperature_units == 1</code> (Fahrenheit) writes
+     <em>two</em> properties together (<code>SetTem</code> + <code>TemRec</code>) for half-degree
+     precision — always set/read them as a pair, never <code>SetTem</code> alone,
+     when Fahrenheit is in play. Tadirel always runs in Celsius
+     (<code>TemUn = 0</code>) to avoid the complication.</li>
+<li><code>sleep</code> setter writes both <code>SwhSlp</code> and <code>SlpMod</code> together.</li>
+</ol>
+<h2 id="getting-it-running-on-android-chaquopy">Getting it running on Android (Chaquopy)</h2>
+<p>Three real problems showed up getting this library running on an actual
+device — none of them in Tadirel's own backend code, which was already
+validated against real hardware from the desktop app first:</p>
+<ol>
+<li><strong><code>greeclimate</code> isn't really pip-installable for Android.</strong> Chaquopy's
+   package mirror only had <code>greeclimate</code> up to a very old <code>2.x</code> release,
+   which predates the modern API this project is built against entirely
+   (different module layout, no <code>AirConditionerDevice</code>/<code>Props</code>/
+   <code>device_factory</code>). Fix: vendor the real, modern <code>greeclimate</code> source
+   as plain Python files in the Android app rather than pip-installing it
+   at all.</li>
+</ol>
+<p>!!! warning "License"
+       <code>greeclimate</code> is GPLv3-licensed. Vendoring its source is fine for
+       personal/sideloaded builds, but re-check GPL source-availability
+       obligations before distributing a built APK to anyone else.</p>
+<ol>
+<li>
+<p><strong>Chaquopy's <code>pycryptodome</code> wheel for Android is broken.</strong> Its
+   cross-compiled <code>arm64-v8a</code> wheels are missing native cipher extension
+   modules (<code>Crypto.Util._cpuid_c</code> on newer releases, <code>Crypto.Cipher
+   ._raw_ecb</code> even on older ones) — every version crashed the app at
+   startup with <code>OSError: Cannot load native module</code>. Fix: the Android
+   build's vendored <code>cipher.py</code> uses <code>javax.crypto</code> (part of the Android
+   platform itself, reached via Chaquopy's Java interop) instead of
+   pycryptodome — same AES-128-ECB and AES-128-GCM semantics as upstream,
+   zero native-wheel risk. The desktop app is unaffected; it still uses
+   real pycryptodome via normal desktop Python, which works fine there.</p>
+</li>
+<li>
+<p><strong>PEP 604 <code>X | None</code> annotations crash on older Python runtimes.</strong>
+   Modern <code>greeclimate</code> was written against Python 3.10+, which evaluates
+   <code>str | None</code> as an actual runtime expression in a function signature.
+   An older on-device Python interpreter doesn't support that syntax at
+   runtime, and crashes with <code>TypeError: unsupported operand type(s) for
+   |: 'type' and 'NoneType'</code> the moment the affected module is imported.
+   Fix: <code>from __future__ import annotations</code> at the top of every vendored
+   module (defers all annotations to strings, never evaluated at runtime)
+   — a no-op everywhere else, a required fix here.</p>
+</li>
+</ol>
+<h2 id="capability-discovery">Capability discovery</h2>
+<p><code>AirConditionerDevice._capability_names</code> lists what the class <em>can</em>
+expose (power, mode, target_temperature, temperature_units,
+current_temperature, fan_speed, fresh_air, xfan, anion, sleep, light,
+horizontal_swing, vertical_swing, quiet, turbo, steady_heat, power_save,
+buzzer_control) — but that's a static class-level list, not a live
+capability negotiation with the actual unit. Real per-unit capabilities
+come back as whatever columns the unit actually answers a status request
+with. Tadirel's UI renders controls for the full static property list and
+simply shows "—" for anything the unit doesn't report a value for.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.sections", "navigation.expand", "content.code.copy", "content.code.annotate", "toc.integrate"], "search": "../assets/javascripts/workers/search.a7633da7.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.a5f9d56c.min.js"></script>
+      
+    
+  </body>
+</html>
