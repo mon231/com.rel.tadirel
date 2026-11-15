@@ -5,12 +5,6 @@ This is the knowledge base behind **Tadirel**, a from-scratch client
 conditioners **locally over LAN**, built by reverse-engineering the
 official Tadiran consumer app and the public Gree AC protocol.
 
-!!! note "Not tracked in git"
-    This `docs/` folder is a local research reference only — it is
-    gitignored and never committed. It exists so this knowledge survives
-    between sessions without putting reverse-engineered protocol details
-    in the project's git history.
-
 ## Map
 
 - **[App teardown](app-teardown.md)** — what's inside the official app:
