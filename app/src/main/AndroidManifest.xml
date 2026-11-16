@@ -14,44 +14,7 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:label="@string/app_name"
         android:theme="@style/Theme.AcControl"
-        android:resizeableActivity="true"
         android:supportsRtl="false">
-
-        <!-- Declares real large-screen/any-orientation support so Samsung
-             (and other OEM) multi-window managers don't fall back to a
-             letterboxed, fixed-size compatibility window: the app should
-             fill whatever window size it's actually given. -->
-        <meta-data
-            android:name="android.max_aspect"
-            android:value="2.4" />
-        <meta-data
-            android:name="android.allow_multiple_resumed_activities"
-            android:value="true" />
-
-        <activity
-            android:name=".MainActivity"
-            android:resizeableActivity="true"
-            android:screenOrientation="unspecified"
-            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|uiMode"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-            <layout
-                android:defaultWidth="411dp"
-                android:defaultHeight="731dp"
-                android:minWidth="320dp"
-                android:minHeight="480dp" />
-        </activity>
-
-        <activity
-            android:name=".DeviceDetailActivity"
-            android:resizeableActivity="true"
-            android:screenOrientation="unspecified"
-            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|uiMode"
-            android:exported="false"
-            android:parentActivityName=".MainActivity" />
 
     </application>
 </manifest>

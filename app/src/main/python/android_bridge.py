@@ -7,7 +7,7 @@ the Python side, deliberately kept out of backend/.
 
 import json
 
-from tadiran_ac_backend import api
+from tadiran_ac_backend import api, server_config
 
 
 def _ok(value):
@@ -83,10 +83,29 @@ def capabilities():
 
 
 def start_server():
-    """Starts the shared HTTPS server (server flavor's service calls this)."""
+    """Starts the shared HTTPS server with the saved settings (idempotent)."""
     try:
-        from tadiran_ac_backend import webserver
+        return _ok(server_config.start())
+    except Exception as exc:
+        return _err(exc)
 
-        return _ok(webserver.start_server())
+
+def server_status():
+    try:
+        return _ok(server_config.status())
+    except Exception as exc:
+        return _err(exc)
+
+
+def get_server_settings():
+    try:
+        return _ok(server_config.get_settings())
+    except Exception as exc:
+        return _err(exc)
+
+
+def set_server_settings(host, port, password):
+    try:
+        return _ok(server_config.set_settings(host, port, password))
     except Exception as exc:
         return _err(exc)

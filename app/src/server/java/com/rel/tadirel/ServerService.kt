@@ -14,14 +14,16 @@ import android.os.PowerManager
 import com.chaquo.python.Python
 
 /**
- * Keeps the shared backend's HTTPS server (webserver.py, port 18972) alive.
- * START_STICKY + a held CPU/Wi-Fi lock so Android keeps it running; the
- * server itself is the same Python code the PC build can run.
+ * Keeps the shared backend's HTTPS server (webserver.py via server_config)
+ * alive. START_STICKY + held CPU/Wi-Fi locks so Android keeps it running,
+ * plus a watchdog thread that re-runs the idempotent start so a failed bind
+ * (e.g. a configured IP not up yet right after boot) is retried forever.
  */
 class ServerService : Service() {
 
     private var cpuLock: PowerManager.WakeLock? = null
     private var wifiLock: WifiManager.WifiLock? = null
+    private var watchdog: Thread? = null
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -32,11 +34,11 @@ class ServerService : Service() {
             NotificationChannel(CHANNEL, "Tadirel server", NotificationManager.IMPORTANCE_LOW)
         )
         val open = PendingIntent.getActivity(
-            this, 0, Intent(this, MainActivity::class.java), PendingIntent.FLAG_IMMUTABLE
+            this, 0, Intent(this, ServerSettingsActivity::class.java), PendingIntent.FLAG_IMMUTABLE
         )
         val notification = Notification.Builder(this, CHANNEL)
             .setContentTitle("Tadirel server running")
-            .setContentText("https port $PORT")
+            .setContentText("Tap to change password / port")
             .setSmallIcon(R.mipmap.ic_launcher)
             .setContentIntent(open)
             .setOngoing(true)
@@ -45,19 +47,31 @@ class ServerService : Service() {
 
         cpuLock = getSystemService(PowerManager::class.java)
             .newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "tadirel:server").apply { acquire() }
+        @Suppress("DEPRECATION")
         wifiLock = applicationContext.getSystemService(WifiManager::class.java)
             .createWifiLock(WifiManager.WIFI_MODE_FULL_HIGH_PERF, "tadirel:server").apply { acquire() }
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        // idempotent on the Python side; off the main thread (binds a socket)
-        Thread {
-            Python.getInstance().getModule("android_bridge").callAttr("start_server")
-        }.start()
+        if (watchdog == null) {
+            watchdog = Thread {
+                while (!Thread.currentThread().isInterrupted) {
+                    try {
+                        Python.getInstance().getModule("android_bridge").callAttr("start_server")
+                        Thread.sleep(15_000)
+                    } catch (e: InterruptedException) {
+                        break
+                    } catch (e: Exception) {
+                        try { Thread.sleep(15_000) } catch (_: InterruptedException) { break }
+                    }
+                }
+            }.also { it.start() }
+        }
         return START_STICKY
     }
 
     override fun onDestroy() {
+        watchdog?.interrupt()
         cpuLock?.release()
         wifiLock?.release()
         super.onDestroy()
@@ -65,7 +79,6 @@ class ServerService : Service() {
 
     companion object {
         const val CHANNEL = "server"
-        const val PORT = 18972
 
         fun start(context: Context) {
             context.startForegroundService(Intent(context, ServerService::class.java))

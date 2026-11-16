@@ -1,3 +1,4 @@
+import base64
 import json
 import ssl
 import urllib.request
@@ -9,7 +10,7 @@ from tadiran_ac_backend import api, webserver
 
 @pytest.fixture(scope="module")
 def base():
-    port = webserver.start_server("127.0.0.1", 0)
+    port = webserver.start_server("127.0.0.1", 0, "pw")
     yield f"https://127.0.0.1:{port}"
     webserver.stop_server()
 
@@ -22,13 +23,18 @@ def _ctx():
     return ctx
 
 
-def _get(url):
-    return urllib.request.urlopen(url, context=_ctx())
+def _auth(pw="pw"):
+    return "Basic " + base64.b64encode(f"u:{pw}".encode()).decode()
+
+
+def _get(url, pw="pw"):
+    req = urllib.request.Request(url, headers={"Authorization": _auth(pw)})
+    return urllib.request.urlopen(req, context=_ctx())
 
 
 def _post(base, fn, args=None):
     req = urllib.request.Request(
-        f"{base}/api/{fn}", json.dumps({"args": args or []}).encode(), {"Content-Type": "application/json"}
+        f"{base}/api/{fn}", json.dumps({"args": args or []}).encode(), {"Content-Type": "application/json", "Authorization": _auth()}
     )
     return json.load(urllib.request.urlopen(req, context=_ctx()))
 
@@ -71,3 +77,25 @@ def test_cert_valid_100_years(tmp_path):
 
 def test_start_idempotent(base):
     assert webserver.start_server() == webserver.server_port()
+
+
+def test_password_required(base):
+    for pw in (None, "wrong", ""):
+        hdr = {"Authorization": _auth(pw)} if pw is not None else {}
+        with pytest.raises(urllib.error.HTTPError) as e:
+            urllib.request.urlopen(urllib.request.Request(base + "/", headers=hdr), context=_ctx())
+        assert e.value.code == 401 and "Basic" in e.value.headers["WWW-Authenticate"]
+    with pytest.raises(urllib.error.HTTPError) as e:
+        urllib.request.urlopen(urllib.request.Request(base + "/api/capabilities", b"{}"), context=_ctx())
+    assert e.value.code == 401
+
+
+def test_pairing_is_stored_by_the_server(base, tmp_path, monkeypatch):
+    # the web client only ever calls the API; the name lives in the server's store
+    from tadiran_ac_backend.store import DeviceStore
+
+    store = DeviceStore(tmp_path / "devices.json")
+    monkeypatch.setattr(api, "_store", store)
+    assert _post(base, "set_device_name", ["aa:bb:cc:dd:ee:ff", "10.0.0.9", None, "Living room"])["ok"]
+    assert store.get("aa:bb:cc:dd:ee:ff")["name"] == "Living room"
+    assert "Living room" in (tmp_path / "devices.json").read_text()

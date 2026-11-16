@@ -70,9 +70,9 @@ def main():
 
     if "--serve" in sys.argv:
         # headless: same HTTPS server the Android "server" build runs
-        from tadiran_ac_backend import webserver
+        from tadiran_ac_backend import server_config
 
-        print("serving https on port", webserver.start_server())
+        print(server_config.start())
         threading.Event().wait()
 
     if os.environ.get("AC_CONTROL_NO_BROWSER"):

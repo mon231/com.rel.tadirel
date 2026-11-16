@@ -64,4 +64,18 @@ object PyBridge {
     suspend fun capabilities(): JSONObject = withContext(Dispatchers.IO) {
         unwrap(module().callAttr("capabilities").toString()) as JSONObject
     }
+
+    suspend fun getServerSettings(): JSONObject = withContext(Dispatchers.IO) {
+        unwrap(module().callAttr("get_server_settings").toString()) as JSONObject
+    }
+
+    /** Saves and applies (restarts the running server). Throws BridgeError on invalid input. */
+    suspend fun setServerSettings(host: String, port: String, password: String): JSONObject =
+        withContext(Dispatchers.IO) {
+            unwrap(module().callAttr("set_server_settings", host, port, password).toString()) as JSONObject
+        }
+
+    suspend fun serverStatus(): JSONObject = withContext(Dispatchers.IO) {
+        unwrap(module().callAttr("server_status").toString()) as JSONObject
+    }
 }

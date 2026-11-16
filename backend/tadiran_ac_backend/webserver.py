@@ -1,4 +1,4 @@
-"""HTTPS server: serves the shared web UI (./web) and exposes api.py as
+"""HTTPS server: serves the shared web UI (./web) behind a password (HTTP Basic) and exposes api.py as
 `POST /api/<function>` with body `{"args": [...]}`, answering
 `{"ok": true, "value": ...}` or `{"ok": false, "error": "..."}`.
 
@@ -9,12 +9,15 @@ install presents the same cert, so a client can pin it once.
 
 from __future__ import annotations
 
+import base64
+import hmac
 import json
 import mimetypes
 import os
 import ssl
 import tempfile
 import threading
+import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from importlib import resources
 
@@ -52,7 +55,30 @@ class _Handler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
+    def _authorized(self) -> bool:
+        """HTTP Basic: any username, password must match. Browsers show
+        their own login prompt on the 401."""
+        header = self.headers.get("Authorization") or ""
+        if header.startswith("Basic "):
+            try:
+                supplied = base64.b64decode(header[6:]).decode().partition(":")[2]
+            except ValueError:
+                supplied = ""
+            if hmac.compare_digest(supplied.encode(), self.server.password.encode()):
+                return True
+        time.sleep(0.5)  # slow down password guessing
+        body = b"authentication required"
+        self.send_response(401)
+        self.send_header("WWW-Authenticate", 'Basic realm="Tadirel", charset="UTF-8"')
+        self.send_header("Content-Type", "text/plain")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+        return False
+
     def do_GET(self):
+        if not self._authorized():
+            return
         path = self.path.split("?", 1)[0]
         if path == "/eel.js":  # desktop-only shim the shared index.html asks for
             return self._send(200, b"", "application/javascript")
@@ -63,6 +89,8 @@ class _Handler(BaseHTTPRequestHandler):
         self._send(200, data, ctype)
 
     def do_POST(self):
+        if not self._authorized():
+            return
         if not self.path.startswith("/api/"):
             return self._send(404, b"not found", "text/plain")
         try:
@@ -89,7 +117,7 @@ def _ssl_context() -> ssl.SSLContext:
     return ctx
 
 
-def start_server(host: str = "0.0.0.0", port: int = DEFAULT_PORT) -> int:
+def start_server(host: str = "0.0.0.0", port: int = DEFAULT_PORT, password: str = "admin") -> int:
     """Start (idempotent) and return the bound port. port=0 picks a free one."""
     global _server
     with _lock:
@@ -97,6 +125,7 @@ def start_server(host: str = "0.0.0.0", port: int = DEFAULT_PORT) -> int:
             return _server.server_address[1]
         srv = ThreadingHTTPServer((host, port), _Handler)
         srv.daemon_threads = True
+        srv.password = password
         srv.allow_reuse_address = True
         srv.socket = _ssl_context().wrap_socket(srv.socket, server_side=True)
         threading.Thread(target=srv.serve_forever, name="ac-https", daemon=True).start()

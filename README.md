@@ -42,15 +42,21 @@ fixes it took to get there.
 ## Tadirel Server (Android, always-on)
 
 `tadirel-server-<tag>.apk` (applicationId `com.rel.tadirel.server`, installs
-next to the regular app) is the same app plus a foreground service that runs
-the shared backend's HTTPS server on **port 18972** and starts again on boot.
-Browse to `https://<phone-ip>:18972/` for the web UI (same UI as the PC
-app). TLS uses a hard-coded self-signed cert (valid to 2126) in
+next to the regular app; arm64-v8a, armeabi-v7a, x86_64; Android 10+) is a
+headless build: no air-conditioner GUI, just one screen with the **listen
+address** (default `0.0.0.0`), **port** (default `18972`) and **password**
+(default `admin`). It runs the shared backend's HTTPS server as an always-on
+foreground service that restarts if killed and starts on boot (with the
+saved settings), and serves the same web UI as the PC app at
+`https://<phone-ip>:<port>/`. The browser asks for the password (HTTP Basic,
+any username). Paired device names are stored by the server, not the browser.
+Settings are only editable on the phone, never over HTTP.
+
+TLS uses a hard-coded self-signed cert (valid to 2126) in
 `backend/tadiran_ac_backend/certs/`, so browsers show a one-time warning.
-There is **no authentication**: anyone on the LAN can control your ACs.
-Open the app once so the service starts and Android grants the
-"always run in background" exemption. The PC app can run the same server
-headless: `python desktop/app.py --serve`.
+Open the app once so Android grants the "always run in background"
+exemption. The PC app can run the same server headless:
+`python desktop/app.py --serve`.
 
 ## Tests
 
